@@ -1,0 +1,11 @@
+<Files "*.sql">
+  Require all denied
+</Files>
+
+<Files "*.ini">
+  Require all denied
+</Files>
+
+<Files "*.txt">
+  Require all denied
+</Files>
