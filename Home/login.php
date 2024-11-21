@@ -18,7 +18,7 @@ if (isset($_POST['userid']) && isset($_POST['password'])) {
 
 
   // Connect to the database using myproperties.ini
-  $inifile = parse_ini_file("myproperties.ini");
+  $inifile = parse_ini_file("../myproperties.ini");
   $conn = new mysqli($inifile["DBHOST"], $inifile["DBUSER"], $inifile["DBPASS"], $inifile["DBNAME"]);
 
   $isAuthenticated = false;  // Assume not authenticated
