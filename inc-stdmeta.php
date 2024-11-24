@@ -5,10 +5,19 @@
   table{font-family: sans-serif; font-weight: lighter;}
   td{font-family: sans-serif; font-weight: lighter; padding: 10px;}
   table,th,td{
-    border: 1px solid;
+    border: 2px solid;
     border-collapse: collapse;
+    border-color: black;
   }
   body{
     background-color:beige;
+  }
+  .grayed{
+    color: dimgray;
+    border-color: black;
+    background-color: rgba(0,0,0,0.1)
+  }
+  .form-field * {
+    vertical-align: middle;
   }
 </style>
