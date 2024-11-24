@@ -10,6 +10,6 @@
   </head>
   <body>
     <h1>Book Returned</h1>
-    <h3><a href="listcheckouts.php">Back to Checkouts</a></h3>
+    <h3><a href="listbooks.php">Back to Books</a></h3>
   </body>
 </html>
