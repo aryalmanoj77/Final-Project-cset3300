@@ -1,9 +1,17 @@
 <?php
   session_start();
-  //All filters in the mysql WHERE clause.
+  //The associative array for the query.
+  $books;
+  //All filters to be put in the mysql WHERE clause.
   $filter = "";
   //Each individual filtering criteria.
   $filters = array();
+  //User inputted filter string.
+  $filterstring = "";
+  //The column to filter inputted filter string on.
+  $filtercolumn = "";
+  //If we need to prepare the sql query or not.
+  $filterprepare = false;
   //Column to order by.
   $sortcol = "";
   //Ascending or descending for sortcol.
@@ -78,7 +86,48 @@
         default:
       }
     }
-    //Fifth, populate filter variable if there's filtering.
+    //Fifth, check filtering for filtercolumn.
+    if(isset($_GET['filtercolumn'])){
+      switch($_GET['filtercolumn']){
+        case 'title':
+          $filtercolumn = "`title`";
+          break;
+        case 'author':
+          $filtercolumn = "`author`";
+          break;
+        case 'publisher':
+          $filtercolumn = "`publisher`";
+          break;
+        case 'name':
+          $filtercolumn = "`name`";
+          break;
+        case 'phone':
+          $filtercolumn = "`phone`";
+          break;
+        case 'address':
+          $filtercolumn = "`address`";
+          break;
+        case 'promise_date':
+          $filtercolumn = "`promise_date`";
+          break;
+        case 'return_date':
+          $filtercolumn = "`return_date`";
+          break;
+        case '':
+        default:
+      }
+      //Sixth, check filtering for filterstring.
+      if(!empty($filtercolumn) && isset($_GET['filterstring'])){
+        $filterstring = CleanInput($_GET['filterstring']);
+        if(!empty($filterstring)){
+          //filterstring will need to be prepared.
+          $filterstring = "%$filterstring%";
+          $filters[] = $filtercolumn."LIKE ? ";
+          $filterprepare = true;
+        }
+      }
+    }
+    //Seventh, populate filter variable if there's filtering.
     if(!empty($filters)){
       $filter = "WHERE".implode(" AND ",$filters);
     }
@@ -88,12 +137,20 @@
   $inifile = parse_ini_file("../myproperties.ini");
   $conn = mysqli_connect($inifile["DBHOST"],$inifile["DBUSER"],$inifile["DBPASS"],$inifile["DBNAME"])
           or die("Connection failed:" . mysqli_connect_error());
-	//$sql = "SELECT `name`, `email`, `phone`, `bgroup`, `id` FROM `users` $sortcol $sortdir";
   $sql = "SELECT`bookid`,`title`,`author`,`publisher`,`active`,`checkoutid`,`rocketid`,`name`,`phone`,`address`,`promise_date`,`return_date`";
   $sql .= "FROM`master_book_query`";
   $sql .= "$filter $sortcol $sortdir";
-  $resultset = mysqli_query($conn,$sql);
-  $books = mysqli_fetch_all($resultset,MYSQLI_ASSOC);
+  if($filterprepare){
+    $prepsql = $conn->prepare($sql);
+    $prepsql->bind_param("s",$filterstring);
+    $prepsql->execute();
+    $resultset = $prepsql->get_result();
+    $books = $resultset->fetch_all(MYSQLI_ASSOC);
+  }
+  else{
+    $resultset = mysqli_query($conn,$sql);
+    $books = mysqli_fetch_all($resultset,MYSQLI_ASSOC);
+  }
 
   //Fill in NULLS.
   foreach($books as &$book){
@@ -206,6 +263,31 @@
       return("both");
     }
   }
+  //Return the current filterstring.
+  function GetFilterString(){
+    if(isset($_GET['filterstring'])){
+      return(htmlspecialchars($_GET['filterstring']));
+    }
+    else{
+      return("");
+    }
+  }
+  //Return the current filtercolumn.
+  function GetFilterColumn($value){
+    if(isset($_GET['filtercolumn'])){
+      if($_GET['filtercolumn']==$value){
+        return('selected="selected"');
+      }
+    }
+    return("");
+  }
+  //Distrust all user input.
+  function CleanInput($data){
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    return $data;
+  }
 ?>
 
 <!DOCTYPE html>
@@ -218,28 +300,44 @@
     <h1>Books</h1>
     <form class="radio-field" method="GET" action="<?= htmlspecialchars($_SERVER['PHP_SELF']); ?>">
     <?php foreach($_GET as $key=>$value): ?>
-    <?php if(!($key=="active"||$key=="checkout")): ?>
+    <?php if(!($key=="active"||$key=="checkout"||$key=="filtercolumn"||$key=="filterstring")): ?>
       <input type="hidden" name="<?= $key; ?>" value="<?= $value; ?>">
     <?php endif; ?>
     <?php endforeach; ?>
       <table>
         <tr>
-          <td>Checkout Status:</td>
+          <td class="radio-label">Checkout Status:</td>
           <td><input type="radio" name="checkout" value="both" <?php if(KindCheckout()=="both") echo "checked" ?>>Both</td>
           <td><input type="radio" name="checkout" value="notcheckedout" <?php if(KindCheckout()=="notcheckedout") echo "checked" ?>>Not Checked Out</td>
-          <td><input type="radio" name="checkout" value="checkedout" <?php if(KindCheckout()=="checkedout") echo "checked" ?>>Checked Out</td>
+          <td colspan="2"><input type="radio" name="checkout" value="checkedout" <?php if(KindCheckout()=="checkedout") echo "checked" ?>>Checked Out</td>
         </tr>
         <tr>
-          <td>Circulation Status:</td>
+          <td class="radio-label">Circulation Status:</td>
           <td><input type="radio" name="active" value="both" <?php if(KindActive()=="both") echo "checked" ?>>Both</td>
           <td><input type="radio" name="active" value="active" <?php if(KindActive()=="active") echo "checked" ?>>In Circulation</td>
-          <td><input type="radio" name="active" value="inactive" <?php if(KindActive()=="inactive") echo "checked" ?>>Removed From Circulation</td>
+          <td colspan="2"><input type="radio" name="active" value="inactive" <?php if(KindActive()=="inactive") echo "checked" ?>>Removed From Circulation</td>
         </tr>
-        <tr><td><input class="submit-button" type="submit" value="Submit"></td></tr>
+        <tr>
+          <td class="radio-label">Search Filter:</td>
+          <td colspan="2"><input class="search" type="text" id="filterstring" name="filterstring" value="<?= GetFilterString(); ?>"></td>
+          <td>
+            <select class="search-filter" id="filtercolumn" name="filtercolumn">
+              <option <?= GetFilterColumn(""); ?> value="">&nbsp;</option>
+              <option <?= GetFilterColumn("title"); ?> value="title">Title</option>
+              <option <?= GetFilterColumn("author"); ?> value="author">Author</option>
+              <option <?= GetFilterColumn("publisher"); ?> value="publisher">Publisher</option>
+              <option <?= GetFilterColumn("name"); ?> value="name">Name</option>
+              <option <?= GetFilterColumn("phone"); ?> value="phone">Phone</option>
+              <option <?= GetFilterColumn("address"); ?> value="address">Address</option>
+              <option <?= GetFilterColumn("promise_date"); ?> value="promise_date">Promise Date</option>
+              <option <?= GetFilterColumn("return_date"); ?> value="return_date">Return Date</option>
+            </select>
+          </td>
+          <td><input class="submit-button" type="submit" value="Submit"></td>
+        </tr>
       </table>
-      <br/>
     </form>
-    <table>
+    <table style="margin-top: 0.25em">
       <tr>
         <th><a href="addbook.php">Add Book</a></th>
         <th><a href="<?= RepopulateUrl("sortcol","title"); ?>">Title</a></th>
