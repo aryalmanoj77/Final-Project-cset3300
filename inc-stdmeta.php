@@ -17,7 +17,12 @@
     border-color: black;
     background-color: rgba(0,0,0,0.1)
   }
-  .form-field * {
-    vertical-align: middle;
+  .radio-field * {
+    border: 0px solid;
+  }
+  .submit-button{
+    border: 2px solid;
+    font-size: 1em;
+    padding: 0.25em;
   }
 </style>
