@@ -70,7 +70,9 @@ $conn->close(); // Close connection
                     value="<?php echo htmlspecialchars($_GET['id']); ?>" readonly />
             </p>
             <p>
-                <button type="submit" name="deactivate">Deactivate Student Account</button>
+                <button type="submit" name="deactivate" onclick="return confirm('Are you sure you want to deactivate this student account?');">
+                    Deactivate Student Account
+                </button>
             </p>
         </form>
     <?php else: ?>
