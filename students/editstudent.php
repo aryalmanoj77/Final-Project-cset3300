@@ -45,7 +45,7 @@ $conn->close(); // Close connection
         }
         input, button {
             border: 1px solid #000;
-            padding: 5px;
+            padding: 3px;
             margin-top: 10px;
         }
         button {
