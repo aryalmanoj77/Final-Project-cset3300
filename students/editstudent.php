@@ -56,12 +56,12 @@ $conn->close(); // Close connection
 <body>
     <h1>Edit Student</h1>
 
-    <!-- Display success or error message -->
+    <!-- Success/Error message -->
     <?php if (!empty($message)): ?>
         <p><?php echo htmlspecialchars($message); ?></p>
     <?php endif; ?>
 
-    <!-- Form to deactivate student account -->
+    <!-- Deactivate Student Account-->
     <?php if (isset($_GET['id'])): ?>
         <form action="editstudent.php" method="post">
             <p>
@@ -79,7 +79,7 @@ $conn->close(); // Close connection
         <p>No student selected for editing.</p>
     <?php endif; ?>
 
-    <!-- Link to go back -->
+    <!-- Link back to liststudents.php -->
     <p><a href="liststudents.php">Back to Students</a></p>
 </body>
 </html>
