@@ -4,7 +4,7 @@
   //If not, redirect to the login page.
   session_start();
   if(!isset($_SESSION['valid_user'])){
-    header('Location: home/login.php');
+    header('Location: ../home/login.php');
     exit();
   }
 ?>
