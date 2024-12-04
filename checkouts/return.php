@@ -1,5 +1,5 @@
 <?php
-session_start();
+session_start(); 
 if (!isset($_SESSION['valid_user'])) {
     header("Location: ../login.php");
     exit;
@@ -11,77 +11,59 @@ $inifile = parse_ini_file("../myproperties.ini");
 $conn = new mysqli($inifile["DBHOST"], $inifile["DBUSER"], $inifile["DBPASS"], $inifile["DBNAME"]);
 if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
 
+// CSRF PROTECTION
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+// INITIALIZE VARIABLES
 $message = '';
 $bookDetails = null;
 
-// SANITIZE USER INPUT
+// SANITIZE INPUT
 function CleanInput($data) {
     $data = trim($data);
     $data = stripslashes($data);
     $data = htmlspecialchars($data);
     return $data;
 }
-// DATE
-function GetFormattedDate($string) {
-    if (isset($string) && !empty($string)) {
-        $date = strtotime($string);
-        return $date !== false ? date('Y-M-d', $date) : htmlspecialchars($string);
-    }
-    return "No Date Found";
+
+// FETCH BOOK DETAILS
+function getBookDetails($conn, $checkout_id) {
+    $stmt = $conn->prepare("
+        SELECT b.title, c.rocketid, c.return_date
+        FROM books b
+        JOIN checkouts c ON b.id = c.book_id 
+        WHERE c.id = ?
+    ");
+    $stmt->bind_param("i", $checkout_id);
+    $stmt->execute();
+    $result = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $result;
 }
 
-// DYNAMIC URLS FOR SORTING AND FILTERING
-function RepopulateUrl($key, $value) {
-    $tempGET = array_merge([], $_GET);
-    $tempGET[$key] = $value;
-    $url = "listcheckouts.php?" . http_build_query($tempGET);
-    return $url;
-}
+// HANDLES BOOK RETURN REQUEST
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_id'], $_POST['csrf_token'])) {
+    if (hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        $checkout_id = intval(CleanInput($_POST['checkout_id']));
+        if ($checkout_id > 0) {
+            $return_date = date('Y-m-d H:i:s');
+            $stmt = $conn->prepare("UPDATE checkouts SET return_date = ? WHERE id = ?");
+            $stmt->bind_param("si", $return_date, $checkout_id);
 
-// CHECKOUT STATUS
-function KindCheckout() {
-    if (isset($_GET['checkout'])) {
-        switch ($_GET['checkout']) {
-            case 'finished':
-                return "finished";
-            case 'active':
-                return "active";
-            default:
-                return "both";
-        }
-    }
-    return "both";
-}
-
-// HANDLES BOOK RETURN
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout_id'])) {
-    $checkout_id = intval(CleanInput($_POST['checkout_id']));
-    
-    if ($checkout_id > 0) {
-        $return_date = date('Y-m-d H:i:s');
-        $stmt = $conn->prepare("UPDATE checkouts SET return_date = ? WHERE id = ?");
-        $stmt->bind_param("si", $return_date, $checkout_id);
-
-        if ($stmt->execute()) {
-            $message = "Book has been successfully returned.";
-
-            // RETURNED BOOK DETAILS
-            $bookStmt = $conn->prepare("
-                SELECT b.title, b.author, c.return_date, c.book_id
-                FROM books b
-                JOIN checkouts c ON b.id = c.book_id 
-                WHERE c.id = ?
-            ");
-            $bookStmt->bind_param("i", $checkout_id);
-            $bookStmt->execute();
-            $bookDetails = $bookStmt->get_result()->fetch_assoc();
-            $bookStmt->close();
+            if ($stmt->execute()) {
+                $message = "Book has been successfully returned.";
+                $bookDetails = getBookDetails($conn, $checkout_id);
+            } else {
+                $message = "ERROR: Unable to mark the book as returned. Please try again.";
+            }
+            $stmt->close();
         } else {
-            $message = "ERROR: Unable to mark the book as returned. Please try again.";
+            $message = "Invalid request. No valid checkout ID provided.";
         }
-        $stmt->close();
     } else {
-        $message = "Invalid request. No valid checkout ID provided.";
+        $message = "Invalid CSRF token. Please try again.";
     }
 } else if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $message = "Invalid request. No book specified for return.";
@@ -122,6 +104,12 @@ $conn->close();
             font-weight: bold;
         }
     </style>
+    <script>
+        // POPUP FUNCTION
+        function showPopup(title, rocketid, returnDate) {
+            alert(`Book Title: ${title}\nRocket ID: ${rocketid}\nReturn Date: ${returnDate}`);
+        }
+    </script>
 </head>
 <body>
     <h1>Book Returned</h1>
@@ -133,34 +121,44 @@ $conn->close();
         </div>
     <?php endif; ?>
 
+    <!-- JS POPUP -->
+    <?php if (!empty($bookDetails)): ?>
+    <script>
+        showPopup(
+            <?php echo json_encode($bookDetails['title']); ?>,
+            <?php echo json_encode($bookDetails['rocketid']); ?>,
+            <?php echo json_encode($bookDetails['return_date']); ?>
+        );
+    </script>
+    <?php endif; ?>
+
     <!-- BOOK DETAILS -->
     <?php if ($bookDetails): ?>
         <p><label>Title:</label> <?php echo htmlspecialchars($bookDetails['title']); ?></p>
-        <p><label>Author:</label> <?php echo htmlspecialchars($bookDetails['author']); ?></p>
-        <p><label>Return Date:</label> <?php echo GetFormattedDate($bookDetails['return_date']); ?></p>
-        <p><a href="listcheckouts.php?filtercol0=bookid&filterstr0=<?php echo htmlspecialchars($bookDetails['book_id']); ?>">View Checkout History</a></p>
+        <p><label>Rocket ID:</label> <?php echo htmlspecialchars($bookDetails['rocketid']); ?></p>
+        <p><label>Return Date:</label> <?php echo htmlspecialchars($bookDetails['return_date']); ?></p>
     <?php endif; ?>
 
-    <!-- NAVIGATION FORM -->
+    <!-- FILTER OPTIONS -->
     <form action="listcheckouts.php" method="get">
         <fieldset>
             <legend>Filter Options</legend>
             
             <!-- STATUS FILTER -->
             <label for="status">Checkout Status:</label>
-            <input type="radio" name="checkout" id="both" value="both" <?php if (KindCheckout() == "both") echo "checked"; ?>>
+            <input type="radio" name="checkout" id="both" value="both" checked>
             <label for="both">Both</label>
-            <input type="radio" name="checkout" id="finished" value="finished" <?php if (KindCheckout() == "finished") echo "checked"; ?>>
+            <input type="radio" name="checkout" id="finished" value="finished">
             <label for="finished">Finished</label>
-            <input type="radio" name="checkout" id="active" value="active" <?php if (KindCheckout() == "active") echo "checked"; ?>>
+            <input type="radio" name="checkout" id="active" value="active">
             <label for="active">Active</label>
             <br />
 
             <!-- SORT ORDER FILTER -->
             <label for="order">Sort By Title:</label>
             <select name="order" id="order">
-                <option value="asc" <?php echo (isset($_GET['order']) && $_GET['order'] === 'asc') ? 'selected' : ''; ?>>A-Z</option>
-                <option value="desc" <?php echo (isset($_GET['order']) && $_GET['order'] === 'desc') ? 'selected' : ''; ?>>Z-A</option>
+                <option value="asc">A-Z</option>
+                <option value="desc">Z-A</option>
             </select>
             <br />
         </fieldset>
