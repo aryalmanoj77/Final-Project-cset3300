@@ -77,18 +77,35 @@ $conn->close();
 <head>
     <title>Book Returned</title>
     <style>
-        label { font-weight: bold; }
-        button {
-            padding: 5px 10px;
-            margin-top: 10px;
-            border: 1px solid #000;
-            background-color: #f0f0f0;
-            cursor: pointer;
+        h1, h2, h3, p, a {
+            font-family: sans-serif;
+            font-weight: lighter;
         }
-        button:hover {
-            background-color: #d0d0d0;
+        h4 {
+            margin: 0em;
         }
-        p { margin-top: 10px; }
+        table {
+            font-family: sans-serif;
+            font-weight: lighter;
+        }
+        td {
+            font-family: sans-serif;
+            font-weight: lighter;
+            padding: 0.75em 0.25em;
+        }
+        table, th, td {
+            border: 2px solid black;
+            border-collapse: collapse;
+            width: fit-content;
+            height: fit-content;
+        }
+        th {
+            padding: 0.5em 0.25em;
+        }
+        body {
+            background-color: beige;
+            margin: 0.75em;
+        }
         .message {
             padding: 10px;
             margin: 10px 0;
@@ -102,6 +119,11 @@ $conn->close();
         .success {
             color: green;
             font-weight: bold;
+        }
+        .button-link {
+            border: 2px solid black;
+            padding: 0.25em;
+            text-align: center;
         }
     </style>
     <script>
