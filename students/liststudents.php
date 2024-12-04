@@ -142,7 +142,11 @@
   $inifile = parse_ini_file("../myproperties.ini");
   $conn = mysqli_connect($inifile["DBHOST"],$inifile["DBUSER"],$inifile["DBPASS"],$inifile["DBNAME"])
           or die("Connection failed:" . mysqli_connect_error());
-  $sql = "SELECT`rocketid`,`name`,`phone`,`address`,`added`,`active`,`checkoutid`,`bookid`,`title`,`author`,`publisher`,`checkout_date`,`promise_date`,`return_date`";
+  $sql = "SELECT";
+  $sql .= "`rocketid`,`name`,`phone`,`address`,`added`,`active`,";
+  $sql .= "`checkoutid`,";
+  $sql .= "`bookid`,`title`,`author`,`publisher`,";
+  $sql .= "`checkout_date`,`promise_date`,`return_date`";
   $sql .= "FROM`master_student_query`";
   $sql .= "$filter $sortcol $sortdir";
   if($filterprepare){
@@ -208,35 +212,35 @@
   }
   //Grays out checkout selection for students who can't check out books.
   function CanCheckout($student){
-    if(!$student['active'])
-      echo '<td class="sub-data grayed"><a>Checkout</a></td>';
-    else
-      echo '<td class="sub-data"><a href="../checkouts/checkout.php?rocketid='.htmlspecialchars($student['rocketid']).'">Checkout</a></td>';
-    return "";
+    if(!$student['active']){
+      echo '<td class="sub-data grayed"><a>Checkout Student</a></td>';
+    }else{
+      echo '<td class="sub-data"><a href="../checkouts/checkout.php?rocketid=';
+      echo htmlspecialchars($student['rocketid']);
+      echo '">Checkout Student</a></td>';
+    }
   }
   //Grays out return selection for books that can't be returned.
   function CanReturn($student){
-    if($student['return_date']!="CHECKED OUT")
-      echo '<td class="sub-data grayed"><a>Return</a></td>';
-    else
-      echo '<td class="sub-data"><a href="../checkouts/return.php?checkoutid='.htmlspecialchars($student['checkoutid']).'">Return</a></td>';
-    return "";
+    if($student['return_date']!="CHECKED OUT"){
+      echo '<td class="sub-data grayed"><a>Return Book</a></td>';
+    }else{
+      echo '<td class="sub-data"><a href="../checkouts/return.php?checkoutid=';
+      echo htmlspecialchars($student['checkoutid']);
+      echo '">Return Book</a></td>';
+    }
   }
   //Return what kind of filtering the active criteria is doing.
-  function KindActive(){
-    if((isset($_GET['active']))){
-      switch($_GET['active']){
-        case 'active':
-          return("active");
-        case 'inactive':
-          return("inactive");
-        case 'both':
-        default:
-          return("both");
-      }
-    }else{
-      return("both");
+  function KindActive($compare){
+    if(!isset($_GET['active']) && $compare=="both"){
+      return("checked");
+    }else if(isset($_GET['active'])){
+      if($_GET['active']==$compare)
+        return("checked");
+      else if($compare=="both")
+        return("checked");
     }
+    return("");
   }
   //Return the current filterstring.
   function GetFilterString(){
@@ -263,6 +267,12 @@
       }
     }
     return "No Date Found";
+  }
+  //Because the history anchor header reference is absurdly long.
+  function BuildHistoryHRef($rocketid){
+    $urlender =  '../checkouts/listcheckouts.php?filtercol0=rocketid';
+    $urlender .= '&filterstr0='.htmlspecialchars($rocketid);
+    return $urlender;
   }
   //Distrust all user input.
   function CleanInput($data){
@@ -293,21 +303,23 @@
         <tr>
           <td class="radio-label">Activity Status:</td>
           <td>
-            <input type="radio" name="active" id="active-both" value="both" <?php if(KindActive()=="both") echo "checked" ?>>
+            <input type="radio" name="active" id="active-both" value="both" <?=KindActive("both");?>>
             <label for="active-both">Both</label>
           </td>
           <td>
-            <input type="radio" name="active" id="active-active" value="active" <?php if(KindActive()=="active") echo "checked" ?>>
+            <input type="radio" name="active" id="active-active" value="active" <?=KindActive("active");?>>
             <label for="active-active">Active</label>
           </td>
           <td colspan="2">
-            <input type="radio" name="active" id="active-inactive" value="inactive" <?php if(KindActive()=="inactive") echo "checked" ?>>
+            <input type="radio" name="active" id="active-inactive" value="inactive" <?=KindActive("inactive");?>>
             <label for="active-inactive">Inactive</label>
           </td>
         </tr>        
         <tr>
           <td class="radio-label">Search Filter:</td>
-          <td colspan="2"><input class="search" type="text" name="filterstring" value="<?=GetFilterString();?>"></td>
+          <td colspan="2">
+            <input class="search" type="text" name="filterstring" value="<?=GetFilterString();?>">
+          </td>
           <td>
             <select class="search-filter" name="filtercolumn">
               <option <?=GetFilterColumn("");?> value="">&nbsp;</option>
@@ -324,8 +336,12 @@
               <option <?=GetFilterColumn("return_date");?> value="return_date">Date Returned</option>
             </select>
           </td>
-          <td><input class="submit-button" type="submit" value="Submit"></td>
-          <td><a href="liststudents.php"><input class="submit-button" style="margin: 0em" type="button" value="Clear"></a></td>
+          <td><input class="submit-button" type="submit" value="Search"></td>
+          <td>
+            <a href="liststudents.php">
+              <input class="submit-button" style="margin: 0em" type="button" value="Clear">
+            </a>
+          </td>
         </tr>
       </table>
     </form>
@@ -359,7 +375,11 @@
         <td class="sub-element">
           <table class="sub-table">
             <tr class="sub-row">
-              <td class="button-link"><a href="editstudent.php?rocketid=<?=htmlspecialchars($student['rocketid']);?>">Edit Student</a></td>
+              <td class="button-link">
+                <a href="editstudent.php?rocketid=<?=htmlspecialchars($student['rocketid']);?>">
+                  Edit Student
+                </a>
+              </td>
             </tr>
           </table>
         </td>
@@ -375,7 +395,11 @@
           <table class="sub-table">
             <tr class="sub-row">
               <td class="nested-td">
-                <table class="sub-table"><tr class="sub-top"><td class="sub-data"><?=GetFormattedDate($student['checkout_date']);?></td></tr></table>
+                <table class="sub-table">
+                  <tr class="sub-top">
+                    <td class="sub-data"><?=GetFormattedDate($student['checkout_date']);?></td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr class="sub-row">
@@ -389,7 +413,11 @@
           <table class="sub-table">
             <tr class="sub-row">
               <td class="nested-td">
-                <table class="sub-table"><tr class="sub-top"><td class="sub-data"><?=GetFormattedDate($student['promise_date']);?></td></tr></table>
+                <table class="sub-table">
+                  <tr class="sub-top">
+                    <td class="sub-data"><?=GetFormattedDate($student['promise_date']);?></td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr class="sub-row">
@@ -403,7 +431,11 @@
           <table class="sub-table">
             <tr class="sub-row">
               <td class="nested-td">
-                <table class="sub-table"><tr class="sub-top"><td class="sub-data"><?=GetFormattedDate($student['return_date']);?></td></tr></table>
+                <table class="sub-table">
+                  <tr class="sub-top">
+                    <td class="sub-data"><?=GetFormattedDate($student['return_date']);?></td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr class="sub-row">
@@ -411,7 +443,7 @@
                 <table class="sub-table">
                   <tr class="sub-bottom">
                     <td class="sub-data">
-                      <a href="../checkouts/listcheckouts.php?filtercol0=rocketid&filterstr0=<?=htmlspecialchars($student['rocketid']);?>">Student History</a>
+                      <a href="<?=BuildHistoryHRef($student['rocketid']);?>">Student History</a>
                     </td>
                   </tr>
                 </table>

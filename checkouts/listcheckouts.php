@@ -130,10 +130,10 @@
           }
         }
       }
-      //Fifth, catch any empty filtercol-filterstr pairs that slip past and populate them into $filters with dummy values.
+      //Fifth, catch empty filtercol-filterstr pairs that slip past and populate with dummy values into $filters.
       if(count($filters)<=$i+0){
-        $filterstr[$i] = "% %";
-        $filtercol[$i] = "`checkout_date`";
+        $filterstr[$i] = "%";
+        $filtercol[$i] = "`checkoutid`";
         $filters[] = $filtercol[$i]."LIKE ? ";
         $filterprepare = true;
       }
@@ -159,7 +159,11 @@
   $inifile = parse_ini_file("../myproperties.ini");
   $conn = mysqli_connect($inifile["DBHOST"],$inifile["DBUSER"],$inifile["DBPASS"],$inifile["DBNAME"])
           or die("Connection failed:" . mysqli_connect_error());
-  $sql = "SELECT`checkoutid`,`bookid`,`title`,`author`,`publisher`,`book_active`,`rocketid`,`name`,`phone`,`address`,`student_active`,`checkout_date`,`promise_date`,`return_date`";
+  $sql = "SELECT";
+  $sql .= "`checkoutid`,";
+  $sql .= "`bookid`,`title`,`author`,`publisher`,`book_active`,";
+  $sql .= "`rocketid`,`name`,`phone`,`address`,`student_active`,";
+  $sql .= "`checkout_date`,`promise_date`,`return_date`";
   $sql .= "FROM`master_checkout_query`";
   $sql .= "$filter $sortcol $sortdir";
   if($filterprepare){
@@ -230,21 +234,26 @@
   }
   //Grays out checkout selection for book-student combinations that can't do checkouts.
   function CanCheckout($checkout,$latest){
-    if(!$checkout['book_active'] || !$checkout['student_active'] || GetLatestReturn($checkout['bookid'],$latest)=="CHECKED OUT"){
-      echo '<td class="sub-data grayed"><a>Checkout</a></td>';
+    if(!$checkout['book_active']
+    ||!$checkout['student_active']
+    ||GetLatestReturn($checkout['bookid'],$latest)=="CHECKED OUT"){
+      echo '<td class="sub-data grayed"><a>Re-Checkout</a></td>';
     }else{
       echo '<td class="sub-data"><a href="../checkouts/checkout.php?bookid=';
       echo htmlspecialchars($checkout['bookid']);
-      echo '&rocketid='.htmlspecialchars($checkout['rocketid']).'">Checkout</a></td>';
+      echo '&rocketid=';
+      echo htmlspecialchars($checkout['rocketid']);
+      echo '">Re-Checkout</a></td>';
     }
   }
   //Grays out return selection for books that can't be returned.
   function CanReturn($checkout){
     if(!$checkout['book_active'] || $checkout['return_date']!="CHECKED OUT"){
-      echo '<td class="sub-data grayed"><a>Return</a></td>';
+      echo '<td class="sub-data grayed"><a>Return Book</a></td>';
     }else{
       echo '<td class="sub-data"><a href="../checkouts/return.php?checkoutid=';
-      echo htmlspecialchars($checkout['checkoutid']).'">Return</a></td>';
+      echo htmlspecialchars($checkout['checkoutid']);
+      echo '">Return Book</a></td>';
     }
   }
   //Fetches most recent return date for a book from an associative array.
@@ -260,20 +269,16 @@
     return "";
   }
   //Return what kind of filtering the checkout criteria is doing.
-  function KindCheckout(){
-    if((isset($_GET['checkout']))){
-      switch($_GET['checkout']){
-        case 'finished':
-          return("finished");
-        case 'active':
-          return("active");
-        case 'both':
-        default:
-          return("both");
-      }
-    }else{
-      return("both");
+  function KindCheckout($compare){
+    if(!isset($_GET['checkout']) && $compare=="both"){
+      return("checked");
+    }else if(isset($_GET['checkout'])){
+      if($_GET['checkout']==$compare)
+        return("checked");
+      else if($compare=="both")
+        return("checked");
     }
+    return("");
   }
   //Return the current filterstring.
   function GetFilterString($index){
@@ -337,22 +342,24 @@
         <tr>
           <td class="radio-label">Checkout Status:</td>
           <td>
-            <input type="radio" name="checkout" id="both" value="both" <?php if(KindCheckout()=="both") echo "checked" ?>>
+            <input type="radio" name="checkout" id="both" value="both" <?=KindCheckout("both");?>>
             <label for="both">Both</label>
           </td>
           <td>
-            <input type="radio" name="checkout" id="finished" value="finished" <?php if(KindCheckout()=="finished") echo "checked" ?>>
+            <input type="radio" name="checkout" id="finished" value="finished" <?=KindCheckout("finished");?>>
             <label for="finished">Finished</label>
           </td>
           <td colspan="2">
-            <input type="radio" name="checkout" id="active" value="active" <?php if(KindCheckout()=="active") echo "checked" ?>>
+            <input type="radio" name="checkout" id="active" value="active" <?=KindCheckout("active");?>>
             <label for="active">Active</label>
           </td>
         <?php for($i=0;$i<$filtnum;$i++): ?>
         </tr>
         <tr>
           <td class="radio-label">Search Filter <?=$i+1?>:</td>
-          <td colspan="2"><input class="search" type="text" name="filterstr<?=$i?>" value="<?=GetFilterString($i);?>"></td>
+          <td colspan="2">
+            <input class="search" type="text" name="filterstr<?=$i?>" value="<?=GetFilterString($i);?>">
+          </td>
           <td>
             <select class="search-filter" name="filtercol<?=$i?>">
               <option <?=GetFilterColumn("",$i);?> value="">&nbsp;</option>
@@ -371,8 +378,12 @@
             </select>
           </td>
         <?php endfor; ?>
-          <td><input class="submit-button" type="submit" value="Submit"></td>
-          <td><a href="listcheckouts.php"><input class="submit-button" style="margin: 0em" type="button" value="Clear"></a></td>
+          <td><input class="submit-button" type="submit" value="Search"></td>
+          <td>
+            <a href="listcheckouts.php">
+              <input class="submit-button" style="margin: 0em" type="button" value="Clear">
+            </a>
+          </td>
         </tr>
       </table>
     </form>
@@ -406,26 +417,18 @@
           <table class="sub-table">
             <tr class="sub-row">
               <td class="nested-td">
-                <table class="sub-table"><tr class="sub-top"><td class="sub-data"><?=GetFormattedDate($checkout['checkout_date']);?></td></tr></table>
+                <table class="sub-table">
+                  <tr class="sub-top">
+                    <td class="sub-data"><?=GetFormattedDate($checkout['checkout_date']);?></td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr class="sub-row">
               <td class="nested-td">
-                <table class="sub-table"><tr class="sub-bottom"><?=CanCheckout($checkout,$latest);?></tr></table>
-              </td>
-            </tr>
-          </table>
-        </td>
-        <td class="sub-element">
-          <table class="sub-table">
-            <tr class="sub-row">
-              <td class="nested-td">
-                <table class="sub-table"><tr class="sub-top"><td class="sub-data"><?=GetFormattedDate($checkout['promise_date']);?></td></tr></table>
-              </td>
-            </tr>
-            <tr class="sub-row">
-              <td class="nested-td">
-                <table class="sub-table"><tr class="sub-bottom"><?=CanReturn($checkout);?></tr></table>
+                <table class="sub-table">
+                  <tr class="sub-bottom"><?=CanCheckout($checkout,$latest);?></tr>
+                </table>
               </td>
             </tr>
           </table>
@@ -434,12 +437,42 @@
           <table class="sub-table">
             <tr class="sub-row">
               <td class="nested-td">
-                <table class="sub-table"><tr class="sub-top"><td class="sub-data"><?=GetFormattedDate($checkout['return_date']);?></td></tr></table>
+                <table class="sub-table">
+                  <tr class="sub-top">
+                    <td class="sub-data"><?=GetFormattedDate($checkout['promise_date']);?></td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr class="sub-row">
               <td class="nested-td">
-                <table class="sub-table"><tr class="sub-bottom"><td class="sub-data"><a href="<?=BuildHistoryHRef($checkout);?>">Checkout History</a></td></tr></table>
+                <table class="sub-table">
+                  <tr class="sub-bottom"><?=CanReturn($checkout);?></tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+        <td class="sub-element">
+          <table class="sub-table">
+            <tr class="sub-row">
+              <td class="nested-td">
+                <table class="sub-table">
+                  <tr class="sub-top">
+                    <td class="sub-data"><?=GetFormattedDate($checkout['return_date']);?></td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr class="sub-row">
+              <td class="nested-td">
+                <table class="sub-table">
+                  <tr class="sub-bottom">
+                    <td class="sub-data">
+                      <a href="<?=BuildHistoryHRef($checkout);?>">Checkout History</a>
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
           </table>

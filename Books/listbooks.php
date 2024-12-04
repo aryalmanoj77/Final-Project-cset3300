@@ -155,7 +155,11 @@
   $inifile = parse_ini_file("../myproperties.ini");
   $conn = mysqli_connect($inifile["DBHOST"],$inifile["DBUSER"],$inifile["DBPASS"],$inifile["DBNAME"])
           or die("Connection failed:" . mysqli_connect_error());
-  $sql = "SELECT`bookid`,`title`,`author`,`publisher`,`added`,`active`,`checkoutid`,`rocketid`,`name`,`phone`,`address`,`checkout_date`,`promise_date`,`return_date`";
+  $sql =  "SELECT";
+  $sql .= "`bookid`,`title`,`author`,`publisher`,`added`,`active`,";
+  $sql .= "`checkoutid`,";
+  $sql .= "`rocketid`,`name`,`phone`,`address`,";
+  $sql .= "`checkout_date`,`promise_date`,`return_date`";
   $sql .= "FROM`master_book_query`";
   $sql .= "$filter $sortcol $sortdir";
   if($filterprepare){
@@ -221,49 +225,47 @@
   }
   //Grays out checkout selection for books that can't be checked out.
   function CanCheckout($book){
-    if(!$book['active'] || $book['return_date']=="CHECKED OUT")
-      echo '<td class="sub-data grayed"><a>Checkout</a></td>';
-    else
-      echo '<td class="sub-data"><a href="../checkouts/checkout.php?bookid='.htmlspecialchars($book['bookid']).'">Checkout</a></td>';
+    if(!$book['active'] || $book['return_date']=="CHECKED OUT"){
+      echo '<td class="sub-data grayed"><a>Checkout Book</a></td>';
+    }else{
+      echo '<td class="sub-data"><a href="../checkouts/checkout.php?bookid=';
+      echo htmlspecialchars($book['bookid']);
+      echo '">Checkout Book</a></td>';
+    }
   }
   //Grays out return selection for books that can't be returned.
   function CanReturn($book){
-    if(!$book['active'] || $book['return_date']!="CHECKED OUT")
-      echo '<td class="sub-data grayed"><a>Return</a></td>';
-    else
-      echo '<td class="sub-data"><a href="../checkouts/return.php?checkoutid='.htmlspecialchars($book['checkoutid']).'">Return</a></td>';
+    if(!$book['active'] || $book['return_date']!="CHECKED OUT"){
+      echo '<td class="sub-data grayed"><a>Return Book</a></td>';
+    }else{
+      echo '<td class="sub-data"><a href="../checkouts/return.php?checkoutid=';
+      echo htmlspecialchars($book['checkoutid']);
+      echo '">Return Book</a></td>';
+    }
   }
   //Return what kind of filtering the active criteria is doing.
-  function KindActive(){
-    if((isset($_GET['active']))){
-      switch($_GET['active']){
-        case 'active':
-          return("active");
-        case 'inactive':
-          return("inactive");
-        case 'both':
-        default:
-          return("both");
-      }
-    }else{
-      return("both");
+  function KindActive($compare){
+    if(!isset($_GET['active']) && $compare=="both"){
+      return("checked");
+    }else if(isset($_GET['active'])){
+      if($_GET['active']==$compare)
+        return("checked");
+      else if($compare=="both")
+        return("checked");
     }
+    return("");
   }
   //Return what kind of filtering the checkout criteria is doing.
-  function KindCheckout(){
-    if((isset($_GET['checkout']))){
-      switch($_GET['checkout']){
-        case 'notcheckedout':
-          return("notcheckedout");
-        case 'checkedout':
-          return("checkedout");
-        case 'both':
-        default:
-          return("both");
-      }
-    }else{
-      return("both");
+  function KindCheckout($compare){
+    if(!isset($_GET['checkout']) && $compare=="both"){
+      return("checked");
+    }else if(isset($_GET['checkout'])){
+      if($_GET['checkout']==$compare)
+        return("checked");
+      else if($compare=="both")
+        return("checked");
     }
+    return("");
   }
   //Return the current filterstring.
   function GetFilterString(){
@@ -290,6 +292,12 @@
       }
     }
     return "No Date Found";
+  }
+  //Because the history anchor header reference is absurdly long.
+  function BuildHistoryHRef($bookid){
+    $urlender =  '../checkouts/listcheckouts.php?filtercol0=bookid';
+    $urlender .= '&filterstr0='.htmlspecialchars($bookid);
+    return $urlender;
   }
   //Distrust all user input.
   function CleanInput($data){
@@ -320,36 +328,38 @@
         <tr>
           <td class="radio-label">Checkout Status:</td>
           <td>
-            <input type="radio" name="checkout" id="checkout-both" value="both" <?php if(KindCheckout()=="both") echo "checked" ?>>
-            <label for="checkout-both">Both</label>
+            <input type="radio" name="checkout" id="c-both" value="both" <?=KindCheckout("both");?>>
+            <label for="c-both">Both</label>
           </td>
           <td>
-            <input type="radio" name="checkout" id="checkout-notcheckedout" value="notcheckedout" <?php if(KindCheckout()=="notcheckedout") echo "checked" ?>>
-            <label for="checkout-notcheckedout">Not Checked Out</label>
+            <input type="radio" name="checkout" id="c-no" value="notcheckedout" <?=KindCheckout("notcheckedout");?>>
+            <label for="c-no">Not Checked Out</label>
           </td>
           <td colspan="2">
-            <input type="radio" name="checkout" id="checkout-checkedout" value="checkedout" <?php if(KindCheckout()=="checkedout") echo "checked" ?>>
-            <label for="checkout-checkedout">Checked Out</label>
+            <input type="radio" name="checkout" id="c-yes" value="checkedout" <?=KindCheckout("checkedout");?>>
+            <label for="c-yes">Checked Out</label>
           </td>
         </tr>
         <tr>
           <td class="radio-label">Circulation Status:</td>
           <td>
-            <input type="radio" name="active" id="active-both" value="both" <?php if(KindActive()=="both") echo "checked" ?>>
-            <label for="active-both">Both</label>
+            <input type="radio" name="active" id="a-both" value="both" <?=KindActive("both");?>>
+            <label for="a-both">Both</label>
           </td>
           <td>
-            <input type="radio" name="active" id="active-active" value="active" <?php if(KindActive()=="active") echo "checked" ?>>
-            <label for="active-active">In Circulation</label>
+            <input type="radio" name="active" id="a-yes" value="active" <?=KindActive("active");?>>
+            <label for="a-yes">In Circulation</label>
           </td>
           <td colspan="2">
-            <input type="radio" name="active" id="active-inactive" value="inactive" <?php if(KindActive()=="inactive") echo "checked" ?>>
-            <label for="active-inactive">Removed From Circulation</label>
+            <input type="radio" name="active" id="a-no" value="inactive" <?=KindActive("inactive");?>>
+            <label for="a-no">Removed From Circulation</label>
           </td>
         </tr>
         <tr>
           <td class="radio-label">Search Filter:</td>
-          <td colspan="2"><input class="search" type="text" name="filterstring" value="<?=GetFilterString();?>"></td>
+          <td colspan="2">
+            <input class="search" type="text" name="filterstring" value="<?=GetFilterString();?>">
+          </td>
           <td>
             <select class="search-filter" name="filtercolumn">
               <option <?=GetFilterColumn("");?> value="">&nbsp;</option>
@@ -366,8 +376,12 @@
               <option <?=GetFilterColumn("return_date");?> value="return_date">Date Returned</option>
             </select>
           </td>
-          <td><input class="submit-button" type="submit" value="Submit"></td>
-          <td><a href="listbooks.php"><input class="submit-button" style="margin: 0em" type="button" value="Clear"></a></td>
+          <td><input class="submit-button" type="submit" value="Search"></td>
+          <td>
+            <a href="listbooks.php">
+              <input class="submit-button" style="margin: 0em" type="button" value="Clear">
+            </a>
+          </td>
         </tr>
       </table>
     </form>
@@ -401,7 +415,9 @@
         <td class="sub-element">
           <table class="sub-table">
             <tr class="sub-row">
-              <td class="button-link"><a href="editbook.php?bookid=<?=htmlspecialchars($book['bookid']);?>">Edit Book</a></td>
+              <td class="button-link">
+                <a href="editbook.php?bookid=<?=htmlspecialchars($book['bookid']);?>">Edit Book</a>
+              </td>
             </tr>
           </table>
         </td>
@@ -417,7 +433,11 @@
           <table class="sub-table">
             <tr class="sub-row">
               <td class="nested-td">
-                <table class="sub-table"><tr class="sub-top"><td class="sub-data"><?=GetFormattedDate($book['checkout_date']);?></td></tr></table>
+                <table class="sub-table">
+                  <tr class="sub-top">
+                    <td class="sub-data"><?=GetFormattedDate($book['checkout_date']);?></td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr class="sub-row">
@@ -431,7 +451,11 @@
           <table class="sub-table">
             <tr class="sub-row">
               <td class="nested-td">
-                <table class="sub-table"><tr class="sub-top"><td class="sub-data"><?=GetFormattedDate($book['promise_date']);?></td></tr></table>
+                <table class="sub-table">
+                  <tr class="sub-top">
+                    <td class="sub-data"><?=GetFormattedDate($book['promise_date']);?></td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr class="sub-row">
@@ -445,7 +469,11 @@
           <table class="sub-table">
             <tr class="sub-row">
               <td class="nested-td">
-                <table class="sub-table"><tr class="sub-top"><td class="sub-data"><?=GetFormattedDate($book['return_date']);?></td></tr></table>
+                <table class="sub-table">
+                  <tr class="sub-top">
+                    <td class="sub-data"><?=GetFormattedDate($book['return_date']);?></td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr class="sub-row">
@@ -453,7 +481,7 @@
                 <table class="sub-table">
                   <tr class="sub-bottom">
                     <td class="sub-data">
-                      <a href="../checkouts/listcheckouts.php?filtercol0=bookid&filterstr0=<?=htmlspecialchars($book['bookid']);?>">Book History</a>
+                      <a href="<?=BuildHistoryHRef($book['bookid']);?>">Book History</a>
                     </td>
                   </tr>
                 </table>

@@ -37,6 +37,15 @@
     background-color:beige;
     margin: 0.75em;
   }
+  .h2-span{
+    margin-right: 0.5em;
+  }
+  .displaypair{
+    margin-top: 0.25em;
+    margin-right: 0.5em;
+    display: inline-block;
+    vertical-align: top;
+  }
   .sub-element{
     border: 2px solid;
     border-color: black;
@@ -109,13 +118,22 @@
     padding: 0px;
   }
   .submit-button{
+    margin-left: 0.09375em;
     border: 0.1875em solid;
-    font-size: 1.125em;
     padding-top: 0.25em;
     padding-bottom: 0.25em;
     padding-left: 0.375em;
     padding-right: 0.375em;
-    margin-left: 0.09375em;
+    font-size: 1.125em;
+  }
+  .clear-button{
+    margin: 0em;
+    border: 0.1875em solid;
+    padding-top: 0.25em;
+    padding-bottom: 0.25em;
+    padding-left: 0.375em;
+    padding-right: 0.375em;
+    font-size: 1.125em;
   }
   .search{
     border: 0.125em solid;
@@ -161,4 +179,5 @@
     color: #FF0000;
     font-weight: bold;
   }
+
 </style>
