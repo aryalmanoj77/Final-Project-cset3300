@@ -65,7 +65,7 @@
   }
   
   $conn->close();
-  
+  //FUNCTIONS
   function CleanInput($data) {
     $data = trim($data);
     $data = stripslashes($data);
@@ -77,7 +77,7 @@
     if(isset($string)) {
       if(!empty($string)) {
         $date = strtotime($string);
-        if($date !== false) return date('Y-M-d', $date);
+        if($date !== false) return date('Y-m-d', $date);
         return htmlspecialchars($string);
       }
     }
@@ -94,45 +94,10 @@
   <body>
     <h1>Add Book</h1>
     <h3>CSET Department Student Library</h3>
-    
+    <h2><a href="../books/listbooks.php">Back to Books</a></h2>
     <?php if ($success): ?>
-      <p class="success">Book successfully added to the library.</p>
-    <?php endif; ?>
-    
-    <form method="POST" action="<?= htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
-      <table>
-        <tr>
-          <td><label for="title">Title:</label></td>
-          <td>
-            <input type="text" id="title" name="title" value="<?= $title; ?>" maxlength="50">
-            <span class="error"><?= $titleErr; ?></span>
-          </td>
-        </tr>
-        <tr>
-          <td><label for="author">Author:</label></td>
-          <td>
-            <input type="text" id="author" name="author" value="<?= $author; ?>" maxlength="50">
-            <span class="error"><?= $authorErr; ?></span>
-          </td>
-        </tr>
-        <tr>
-          <td><label for="publisher">Publisher:</label></td>
-          <td>
-            <input type="text" id="publisher" name="publisher" value="<?= $publisher; ?>" maxlength="50">
-            <span class="error"><?= $publisherErr; ?></span>
-          </td>
-        </tr>
-        <tr>
-          <td colspan="2">
-            <input type="submit" value="Add Book">
-          </td>
-        </tr>
-      </table>
-    </form>
-
-    <?php if ($recentBook): ?>
-    <h2>Most Recently Added Book</h2>
-    <table>
+    <h3 style="margin-bottom: 0.25em">Successfully Added Book:</h3>
+    <table style="margin-bottom: 0.25em">
       <tr>
         <th>Book ID</th>
         <th>Title</th>
@@ -149,7 +114,30 @@
       </tr>
     </table>
     <?php endif; ?>
-    
-    <h3><a href="listbooks.php">Back to Books</a></h3>
+    <form class="field-field" method="POST" action="<?= htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+      <table>
+        <tr>
+          <td class="field-label">Title:</td>
+          <td><input class="textbox" type="text" name="title" value="<?= $title; ?>" maxlength="50"></td>
+          <td><span class="error"><?= $titleErr; ?></span></td>
+        </tr>
+        <tr>
+          <td class="field-label">Author:</td>
+          <td><input class="textbox" type="text" name="author" value="<?= $author; ?>" maxlength="50"></td>
+          <td><span class="error"><?= $authorErr; ?></span></td>
+        </tr>
+        <tr>
+          <td class="field-label">Publisher:</td>
+          <td><input class="textbox" type="text" name="publisher" value="<?= $publisher; ?>" maxlength="50"></td>
+          <td><span class="error"><?= $publisherErr; ?></span></td>
+        </tr>
+        <tr>
+          <td class="field-label">Add Book:</td>
+          <td><button class="change-button" type="submit" name="add">Add</button></td>
+          </td>
+        </tr>
+      </table>
+    </form>
+    <h2><a href="../books/listbooks.php">Back to Books</a></h2>
   </body>
 </html>
