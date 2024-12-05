@@ -108,87 +108,64 @@ $conn->close();
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <?php require('../inc-stdmeta.php'); ?>
-    <title>Add Student | CSET Library</title>
-</head>
-<body>
+    <title>Add Student</title>
+  </head>
+  <body>
     <h1>Add Student</h1>
     <h3>CSET Department Student Library</h3>
-    
+    <h2><a href="../students/liststudents.php">Back to Students</a></h2>
     <?php if ($success): ?>
-        <div class="success-message">Student successfully added.</div>
+    <h3 style="margin-bottom: 0.25em">Successfully Added Student:</h3>
+    <table style="margin-bottom: 0.25em">
+      <tr>
+        <th>Rocket ID</th>
+        <th>Name</th>
+        <th>Phone</th>
+        <th>Address</th>
+        <th>Added Date</th>
+      </tr>
+      <tr>
+        <td><?= htmlspecialchars($recentStudent['rocketid']); ?></td>
+        <td><?= htmlspecialchars($recentStudent['name']); ?></td>
+        <td><?= htmlspecialchars($recentStudent['phone']); ?></td>
+        <td><?= htmlspecialchars($recentStudent['address']); ?></td>
+        <td><?= GetFormattedDate($recentStudent['create_dt']); ?></td>
+      </tr>
+    </table>
     <?php endif; ?>
-    
     <?php if ($error): ?>
-        <div class="error-message"><?= $error ?></div>
+    <div class="error-message"><?= $error ?></div>
     <?php endif; ?>
-    
-    <form method="POST" action="<?= htmlspecialchars($_SERVER["PHP_SELF"]); ?>" class="add-form">
-        <table>
-            <tr>
-                <td><label for="rocketid">Rocket ID:</label></td>
-                <td>
-                    <input type="text" id="rocketid" name="rocketid" 
-                           value="<?= htmlspecialchars($rocketid); ?>" maxlength="10">
-                    <span class="error"><?= $rocketidErr; ?></span>
-                </td>
-            </tr>
-            <tr>
-                <td><label for="name">Name:</label></td>
-                <td>
-                    <input type="text" id="name" name="name" 
-                           value="<?= htmlspecialchars($name); ?>" maxlength="50">
-                    <span class="error"><?= $nameErr; ?></span>
-                </td>
-            </tr>
-            <tr>
-                <td><label for="phone">Phone:</label></td>
-                <td>
-                    <input type="text" id="phone" name="phone" 
-                           value="<?= htmlspecialchars($phone); ?>" maxlength="15">
-                    <span class="error"><?= $phoneErr; ?></span>
-                </td>
-            </tr>
-            <tr>
-                <td><label for="address">Address:</label></td>
-                <td>
-                    <input type="text" id="address" name="address" 
-                           value="<?= htmlspecialchars($address); ?>" maxlength="50">
-                    <span class="error"><?= $addressErr; ?></span>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2" class="form-actions">
-                    <button type="submit" class="submit-button">Add Student</button>
-                    <a href="liststudents.php" class="button-secondary">Cancel</a>
-                </td>
-            </tr>
-        </table>
+    <form class="field-field" method="POST" action="<?= htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+      <table>
+        <tr>
+          <td class="field-label">Rocket ID:</td>
+          <td><input class="textbox" type="text" name="rocketid" value="<?= htmlspecialchars($rocketid); ?>" maxlength="10"></td>
+          <td><span class="error"><?= $rocketidErr; ?></span></td>
+        </tr>
+        <tr>
+          <td class="field-label">Name:</td>
+          <td><input class="textbox" type="text" name="name" value="<?= htmlspecialchars($name); ?>" maxlength="50"></td>
+          <td><span class="error"><?= $nameErr; ?></span></td>
+        </tr>
+        <tr>
+          <td class="field-label">Phone:</td>
+          <td><input class="textbox" type="text" name="phone" value="<?= htmlspecialchars($phone); ?>" maxlength="15"></td>
+          <td><span class="error"><?= $phoneErr; ?></span></td>
+        </tr>
+        <tr>
+          <td class="field-label">Address:</td>
+          <td><input class="textbox" type="text" name="address" value="<?= htmlspecialchars($address); ?>" maxlength="50"></td>
+          <td><span class="error"><?= $addressErr; ?></span></td>
+        </tr>
+        <tr>
+          <td class="field-label">Add Student:</td></td>
+          <td><button class="change-button" type="submit" name="add">Add</button></td>
+        </tr>
+      </table>
     </form>
-
-    <?php if ($recentStudent): ?>
-    <div class="recent-addition">
-        <h2>Most Recently Added Student</h2>
-        <table class="data-table">
-            <tr>
-                <th>Rocket ID</th>
-                <th>Name</th>
-                <th>Phone</th>
-                <th>Address</th>
-                <th>Added Date</th>
-            </tr>
-            <tr>
-                <td><?= htmlspecialchars($recentStudent['rocketid']); ?></td>
-                <td><?= htmlspecialchars($recentStudent['name']); ?></td>
-                <td><?= htmlspecialchars($recentStudent['phone']); ?></td>
-                <td><?= htmlspecialchars($recentStudent['address']); ?></td>
-                <td><?= GetFormattedDate($recentStudent['create_dt']); ?></td>
-            </tr>
-        </table>
-    </div>
-    <?php endif; ?>
-    
-    <h3><a href="liststudents.php">Back to Students</a></h3>
+    <h2><a href="../students/liststudents.php">Back to Students</a></h2>
 </body>
 </html>
