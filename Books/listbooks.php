@@ -295,7 +295,7 @@
     if(!empty($string)){
       $date = strtotime($string);
       if($date!==false){
-        return date('Y-M-d',$date);
+        return date('Y-m-d',$date);
       }else{
         return htmlspecialchars($string);
       }

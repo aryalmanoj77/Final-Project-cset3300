@@ -135,14 +135,16 @@
       }
     }
     //Sixth, populate filter variable if there's filtering.
-    if(!empty($filters)) $filter = "WHERE".implode(" AND ",$filters);
+    if(!empty($filters)){
+      $filter = "WHERE".implode(" AND ",$filters);
+    }
   }
 
   //Fetch associative array.
   $inifile = parse_ini_file("../myproperties.ini");
   $conn = mysqli_connect($inifile["DBHOST"],$inifile["DBUSER"],$inifile["DBPASS"],$inifile["DBNAME"])
-          or die("Connection failed:" . mysqli_connect_error());
-  $sql = "SELECT";
+          or die("Connection failed:".mysqli_connect_error());
+  $sql =  "SELECT";
   $sql .= "`rocketid`,`name`,`phone`,`address`,`added`,`active`,";
   $sql .= "`checkoutid`,";
   $sql .= "`bookid`,`title`,`author`,`publisher`,";
@@ -164,11 +166,14 @@
   //Fill in NULLS.
   foreach($students as &$student){
     //NULL return date with non-NULL promise date means checked out.
-    if(is_null($student['return_date']) && !is_null($student['promise_date']))
+    if(is_null($student['return_date']) && !is_null($student['promise_date'])){
       $student['return_date'] = 'CHECKED OUT';
+    }
     //Everything else that's NULL is not applicable.
     foreach($student as &$key){
-      if(is_null($key)) $key = 'N/A';
+      if(is_null($key)){
+        $key = 'N/A';
+      }
     }
     unset($key);
   }
@@ -235,43 +240,47 @@
     if(!isset($_GET['active']) && $compare=="both"){
       return("checked");
     }else if(isset($_GET['active'])){
-      if($_GET['active']==$compare)
+      if($_GET['active']==$compare){
         return("checked");
-      else if($compare=="both")
+      }else if($compare=="both"){
         return("checked");
+      }
     }
     return("");
   }
   //Return the current filterstring.
   function GetFilterString(){
-    if(isset($_GET['filterstring']))
+    if(isset($_GET['filterstring'])){
       return(htmlspecialchars($_GET['filterstring']));
-    else
-      return("");
+    }
+    return("");
   }
   //Return the current filtercolumn.
   function GetFilterColumn($value){
     if(isset($_GET['filtercolumn'])){
-      if($_GET['filtercolumn']==$value)
+      if($_GET['filtercolumn']==$value){
         return('selected="selected"');
+      }
     }
     return("");
   }
   //Returns strings as date formats all in the same format.
   function GetFormattedDate($string){
-    if(isset($string)){
-      if(!empty($string)){
-        $date = strtotime($string);
-        if($date!==false) return date('Y-M-d',$date);
-        else return htmlspecialchars($string);
+    if(!empty($string)){
+      $date = strtotime($string);
+      if($date!==false){
+        return date('Y-m-d',$date);
+      }else{
+        return htmlspecialchars($string);
       }
     }
     return "No Date Found";
   }
   //Because the history anchor header reference is absurdly long.
-  function BuildHistoryHRef($rocketid){
-    $urlender =  '../checkouts/listcheckouts.php?filtercol0=rocketid';
+  function BuildHistoryHRef($rocketid,$name){
+    $urlender =  '../checkouts/listcheckouts.php?filtercol0=rocketid&filtercol1=name';
     $urlender .= '&filterstr0='.htmlspecialchars($rocketid);
+    $urlender .= '&filterstr1='.htmlspecialchars($name);
     return $urlender;
   }
   //Distrust all user input.
@@ -286,7 +295,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-  <?php require('../inc-stdmeta.php'); ?>
+    <?php require('../inc-stdmeta.php'); ?>
     <title>Students</title>
   </head>
   <body>
@@ -294,11 +303,11 @@
     <h3>CSET Department Student Library</h3>
     <h2><a href="../index.php">Back to Home</a></h2>
     <form class="radio-field" method="GET" action="<?=htmlspecialchars($_SERVER['PHP_SELF']);?>">
-    <?php foreach($_GET as $key=>$value): ?>
-    <?php if(!($key=="active"||$key=="filtercolumn"||$key=="filterstring")): ?>
+      <?php foreach($_GET as $key=>$value): ?>
+      <?php if(!($key=="active"||$key=="filtercolumn"||$key=="filterstring")): ?>
       <input type="hidden" name="<?=CleanInput($key);?>" value="<?=CleanInput($value);?>">
-    <?php endif; ?>
-    <?php endforeach; ?>
+      <?php endif; ?>
+      <?php endforeach; ?>
       <table>
         <tr>
           <td class="radio-label">Activity Status:</td>
@@ -366,12 +375,12 @@
         <th><a href="<?=RepopulateUrl("sortcol","promise_date");?>">Return By Date</a></th>
         <th><a href="<?=RepopulateUrl("sortcol","return_date");?>">Date Returned</a></th>
       </tr>
-    <?php foreach($students as $student): ?>
-    <?php if(!$student['active']): ?>
+      <?php foreach($students as $student): ?>
+      <?php if(!$student['active']): ?>
       <tr class="grayed">
-    <?php else: ?>
+      <?php else: ?>
       <tr>
-    <?php endif; ?>
+      <?php endif; ?>
         <td class="sub-element">
           <table class="sub-table">
             <tr class="sub-row">
@@ -443,7 +452,7 @@
                 <table class="sub-table">
                   <tr class="sub-bottom">
                     <td class="sub-data">
-                      <a href="<?=BuildHistoryHRef($student['rocketid']);?>">Student History</a>
+                      <a href="<?=BuildHistoryHRef($student['rocketid'],$student['name']);?>">Student History</a>
                     </td>
                   </tr>
                 </table>
@@ -452,7 +461,7 @@
           </table>
         </td>
       </tr>
-    <?php endforeach; ?>
+      <?php endforeach; ?>
     </table>
     <h2><a href="../index.php">Back to Home</a></h2>
   </body>
