@@ -87,7 +87,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
-<<<<<<< HEAD
 function CleanInput($data) {
     $data = trim($data);
     $data = stripslashes($data);
@@ -100,28 +99,6 @@ function GetFormattedDate($string) {
         $date = strtotime($string);
         if($date !== false) return date('Y-M-d', $date);
         return htmlspecialchars($string);
-=======
-// DATABASE CONNECTION
-require('../inc-stdmeta.php');
-$inifile = parse_ini_file("../myproperties.ini");
-$conn = new mysqli($inifile["DBHOST"], $inifile["DBUSER"], $inifile["DBPASS"], $inifile["DBNAME"]);
-if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
-
-// FORM SUBMISSION
-$message = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = trim($_POST['name']);
-    $email = trim($_POST['email']);
-    $status = isset($_POST['status']) ? 1 : 0;
-
-    if (!empty($name) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $stmt = $conn->prepare("INSERT INTO students (name, email, active) VALUES (?, ?, ?)");
-        $stmt->bind_param("ssi", $name, $email, $status);
-        $message = $stmt->execute() ? "Student added successfully." : "Error adding student.";
-        $stmt->close();
-    } else {
-        $message = "Please provide a valid name and email.";
->>>>>>> f0c7a39111c8d69bcfd07a62a69f26345449075b
     }
     return "No Date Found";
 }
@@ -137,7 +114,6 @@ $conn->close();
 </head>
 <body>
     <h1>Add Student</h1>
-<<<<<<< HEAD
     <h3>CSET Department Student Library</h3>
     
     <?php if ($success): ?>
@@ -189,30 +165,6 @@ $conn->close();
                 </td>
             </tr>
         </table>
-=======
-    <h3><a href="liststudents.php">Back to Students</a></h3>
-
-    <!-- SUCCESS/ERROR MESSAGE -->
-    <?php if ($message): ?>
-        <p><?php echo htmlspecialchars($message); ?></p>
-    <?php endif; ?>
-
-    <!-- ADD STUDENT -->
-    <form method="post">
-        <p>
-            <label for="name">Name:</label>
-            <input type="text" name="name" id="name" size="30" required />
-        </p>
-        <p>
-            <label for="email">Email:</label>
-            <input type="email" name="email" id="email" size="30" required />
-        </p>
-        <p>
-            <label for="status">Active:</label>
-            <input type="checkbox" name="status" id="status" value="1" checked />
-        </p>
-        <button type="submit">Add Student</button>
->>>>>>> f0c7a39111c8d69bcfd07a62a69f26345449075b
     </form>
 
     <?php if ($recentStudent): ?>

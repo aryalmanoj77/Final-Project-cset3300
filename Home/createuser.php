@@ -91,42 +91,33 @@
   <body>
     <h1>Create User</h1>
     <h3>CSET Department Student Library</h3>
-    
+    <h2><a href="../index.php">Back to Home</a></h2>
     <?php if ($success): ?>
-      <p class="success">User successfully created.</p>
+      <h3 class="success">User successfully created.</h3>
     <?php endif; ?>
-    
-    <form method="POST" action="<?= htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+    <form class="field-field" method="POST" action="<?= htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
       <table>
         <tr>
-          <td><label for="username">Username:</label></td>
-          <td>
-            <input type="text" id="username" name="username" value="<?= htmlspecialchars($username); ?>" maxlength="30">
-            <span class="error"><?= $usernameErr; ?></span>
-          </td>
+          <td class="field-label">Username:</td>
+          <td><input class="textbox" type="text" id="username" name="username" value="<?=htmlspecialchars($username);?>" maxlength="30"></td>
+          <td><span class="error"><?= $usernameErr; ?></span></td>
         </tr>
         <tr>
-          <td><label for="password">Password:</label></td>
-          <td>
-            <input type="password" id="password" name="password">
-            <span class="error"><?= $passwordErr; ?></span>
-          </td>
+          <td class="field-label"><label for="password">Password:</td>
+          <td><input class="textbox" type="password" id="password" name="password"></td>
+          <td><span class="error"><?= $passwordErr; ?></span></td>
         </tr>
         <tr>
-          <td><label for="confirmPassword">Confirm Password:</label></td>
-          <td>
-            <input type="password" id="confirmPassword" name="confirmPassword">
-            <span class="error"><?= $confirmPasswordErr; ?></span>
-          </td>
+          <td class="field-label"><label for="confirmPassword">Confirm Password:</td>
+          <td><input class="textbox" type="password" id="confirmPassword" name="confirmPassword"></td>
+          <td><span class="error"><?= $confirmPasswordErr; ?></span></td>
         </tr>
         <tr>
-          <td colspan="2">
-            <input type="submit" value="Create User">
-          </td>
+          <td class="field-label">Create User:</td>
+          <td><button class="change-button" type="submit" name="create">Create</button></td>
         </tr>
       </table>
     </form>
-    
-    <h3><a href="../index.php">Back to Home</a></h3>
+    <h2><a href="../index.php">Back to Home</a></h2>
   </body>
 </html>
