@@ -148,7 +148,9 @@
       }
     }
     //Seventh, populate filter variable if there's filtering.
-    if(!empty($filters)) $filter = "WHERE".implode(" AND ",$filters);
+    if(!empty($filters)){
+      $filter = "WHERE".implode(" AND ",$filters);
+    }
   }
 
   //Fetch associative array.
@@ -177,11 +179,14 @@
   //Fill in NULLS.
   foreach($books as &$book){
     //NULL return date with non-NULL promise date means checked out.
-    if(is_null($book['return_date']) && !is_null($book['promise_date']))
+    if(is_null($book['return_date']) && !is_null($book['promise_date'])){
       $book['return_date'] = 'CHECKED OUT';
+    }
     //Everything else that's NULL is not applicable.
     foreach($book as &$key){
-      if(is_null($key)) $key = 'N/A';
+      if(is_null($key)){
+        $key = 'N/A';
+      }
     }
     unset($key);
   }
@@ -248,10 +253,11 @@
     if(!isset($_GET['active']) && $compare=="both"){
       return("checked");
     }else if(isset($_GET['active'])){
-      if($_GET['active']==$compare)
+      if($_GET['active']==$compare){
         return("checked");
-      else if($compare=="both")
+      }else if($compare=="both"){
         return("checked");
+      }
     }
     return("");
   }
@@ -260,43 +266,47 @@
     if(!isset($_GET['checkout']) && $compare=="both"){
       return("checked");
     }else if(isset($_GET['checkout'])){
-      if($_GET['checkout']==$compare)
+      if($_GET['checkout']==$compare){
         return("checked");
-      else if($compare=="both")
+      }else if($compare=="both"){
         return("checked");
+      }
     }
     return("");
   }
   //Return the current filterstring.
   function GetFilterString(){
-    if(isset($_GET['filterstring']))
+    if(isset($_GET['filterstring'])){
       return(htmlspecialchars($_GET['filterstring']));
-    else
-      return("");
+    }
+    return("");
   }
   //Return the current filtercolumn.
   function GetFilterColumn($value){
     if(isset($_GET['filtercolumn'])){
-      if($_GET['filtercolumn']==$value)
+      if($_GET['filtercolumn']==$value){
         return('selected="selected"');
+      }
     }
     return("");
   }
   //Returns strings as date formats all in the same format.
   function GetFormattedDate($string){
-    if(isset($string)){
-      if(!empty($string)){
-        $date = strtotime($string);
-        if($date!==false) return date('Y-M-d',$date);
-        else return htmlspecialchars($string);
+    if(!empty($string)){
+      $date = strtotime($string);
+      if($date!==false){
+        return date('Y-M-d',$date);
+      }else{
+        return htmlspecialchars($string);
       }
     }
     return "No Date Found";
   }
   //Because the history anchor header reference is absurdly long.
-  function BuildHistoryHRef($bookid){
-    $urlender =  '../checkouts/listcheckouts.php?filtercol0=bookid';
+  function BuildHistoryHRef($bookid,$title){
+    $urlender =  '../checkouts/listcheckouts.php?filtercol0=bookid&filtercol1=title';
     $urlender .= '&filterstr0='.htmlspecialchars($bookid);
+    $urlender .= '&filterstr1='.htmlspecialchars($title);
     return $urlender;
   }
   //Distrust all user input.
@@ -311,7 +321,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-  <?php require('../inc-stdmeta.php'); ?>
+    <?php require('../inc-stdmeta.php'); ?>
     <title>Books</title>
   </head>
   <body>
@@ -319,11 +329,11 @@
     <h3>CSET Department Student Library</h3>
     <h2><a href="../index.php">Back to Home</a></h2>
     <form class="radio-field" method="GET" action="<?=htmlspecialchars($_SERVER['PHP_SELF']);?>">
-    <?php foreach($_GET as $key=>$value): ?>
-    <?php if(!($key=="active"||$key=="checkout"||$key=="filtercolumn"||$key=="filterstring")): ?>
+      <?php foreach($_GET as $key=>$value): ?>
+      <?php if(!($key=="active"||$key=="checkout"||$key=="filtercolumn"||$key=="filterstring")): ?>
       <input type="hidden" name="<?=CleanInput($key);?>" value="<?=CleanInput($value);?>">
-    <?php endif; ?>
-    <?php endforeach; ?>
+      <?php endif; ?>
+      <?php endforeach; ?>
       <table>
         <tr>
           <td class="radio-label">Checkout Status:</td>
@@ -406,12 +416,12 @@
         <th><a href="<?=RepopulateUrl("sortcol","promise_date");?>">Return By Date</a></th>
         <th><a href="<?=RepopulateUrl("sortcol","return_date");?>">Date Returned</a></th>
       </tr>
-    <?php foreach($books as $book): ?>
-    <?php if(!$book['active']): ?>
+      <?php foreach($books as $book): ?>
+      <?php if(!$book['active']): ?>
       <tr class="grayed">
-    <?php else: ?>
+      <?php else: ?>
       <tr>
-    <?php endif; ?>
+      <?php endif; ?>
         <td class="sub-element">
           <table class="sub-table">
             <tr class="sub-row">
@@ -481,7 +491,7 @@
                 <table class="sub-table">
                   <tr class="sub-bottom">
                     <td class="sub-data">
-                      <a href="<?=BuildHistoryHRef($book['bookid']);?>">Book History</a>
+                      <a href="<?=BuildHistoryHRef($book['bookid'],$book['title']);?>">Book History</a>
                     </td>
                   </tr>
                 </table>
@@ -490,7 +500,7 @@
           </table>
         </td>
       </tr>
-    <?php endforeach; ?>
+      <?php endforeach; ?>
     </table>
     <h2><a href="../index.php">Back to Home</a></h2>
   </body>
