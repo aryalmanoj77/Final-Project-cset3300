@@ -33,18 +33,18 @@
   if($_SERVER['REQUEST_METHOD']=="POST"){
     //First, clean and set $checkoutid variable if not empty.
     if(empty($_POST['checkoutid'])){
-      $returnErr = "Selection not returnable.";
+      $returnErr = "Incomplete selection.";
     }else{
       $checkoutid = CleanInput($_POST['checkoutid']);
     }
     //Second, check that $checkoutid variablbe is not empty.
     if(empty($checkoutid)){
-      $returnErr = "Selection not returnable.";
+      $returnErr = "Incomplete selection.";
     }else{ //Third, validate data for our return request via a database query, checking returnability.
       $inifile = parse_ini_file("../myproperties.ini");
       $conn    = mysqli_connect($inifile["DBHOST"],$inifile["DBUSER"],$inifile["DBPASS"],$inifile["DBNAME"])
                  or die("Connection failed:".mysqli_connect_error());
-      $checksql = "SELECT`checkoutid`,`promise_date`,return_date`";
+      $checksql = "SELECT`checkoutid`,`promise_date`,`return_date`";
       $checksql .= "FROM`checkout`";
       $checksql .= "WHERE`checkoutid`= ? "; //Checkout needs to have this id.
       $checksql .= "AND(`return_date`IS NULL AND`promise_date`IS NOT NULL)"; //And be checked out.
@@ -68,7 +68,7 @@
       $inifile = parse_ini_file("../myproperties.ini");
       $conn    = mysqli_connect($inifile["DBHOST"],$inifile["DBUSER"],$inifile["DBPASS"],$inifile["DBNAME"])
                  or die("Connection failed:".mysqli_connect_error());
-      $returnsql =  "UPDATE`checkout`SET`return_date`=$returneddate WHERE`checkoutid`= ? ";
+      $returnsql =  "UPDATE`checkout`SET`return_date`='$returneddate' WHERE`checkoutid`= ? ";
       $returnstmt = $conn->prepare($returnsql);
       $returnstmt->bind_param("s",$checkoutid);
       $succ = $returnstmt->execute();
@@ -95,7 +95,7 @@
     //Sixth, if return could be issued, reload page with just the success and the latest returned id and a cleaned $_GET.
     if($succ){
       $cleanedGET['succ'] = CleanInput($succ);
-      $cleanedGET['latestid'] = CleanInput($checkout_id);
+      $cleanedGET['latestid'] = CleanInput($checkoutid);
       $urlender = "return.php?";
       $urlender .= http_build_query($cleanedGET);
       header("Location: $urlender");
@@ -106,7 +106,7 @@
   //SECOND, check $_GET for extra values sent over prior POSTs and set variables.
   if($_SERVER['REQUEST_METHOD']=="GET"){
     if(isset($_GET['returnErr'])){
-      $checkoutErr = CleanInput($_GET['returnErr']);
+      $returnErr = CleanInput($_GET['returnErr']);
     }
     if(isset($_GET['succ'])){
       $succ = CleanInput($_GET['succ']);
@@ -133,6 +133,9 @@
     $l_prepsql->bind_param("s",$latestid);
     $l_prepsql->execute();
     $l_result = $l_prepsql->get_result();
+    if($l_result->num_rows==1){
+      $latest = $l_result->fetch_assoc();
+    }
     $conn->close();
   }
 
@@ -446,7 +449,7 @@
       <span class="h2-span"><a href="../books/listbooks.php">Back to Books</a></span>
       <span class="h2-span"><a href="../students/liststudents.php">Back to Students</a></span>
     </h2>
-    <?php if($succ): ?>
+    <?php if($succ && !empty($latest)): ?>
     <h3 style="margin-bottom: 0.25em">Successfully Returned Book:</h3>
     <table style="margin-bottom: 0.25em">
       <tr>
