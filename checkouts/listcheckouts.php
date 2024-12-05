@@ -122,7 +122,7 @@
         //Fourth, check filtering for filterstrings.
         if(!empty($filtercol[$i]) && isset($_GET['filterstr'.$i])){
           $filterstr[$i] = CleanInput($_GET['filterstr'.$i]);
-          if(!empty($filterstr[$i])){
+          if(!empty($filterstr[$i]) || $filterstr[$i]==0){
             //filterstring will need to be prepared.
             $filterstr[$i] = "%$filterstr[$i]%";
             $filters[] = $filtercol[$i]."LIKE ? ";

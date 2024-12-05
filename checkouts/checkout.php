@@ -39,7 +39,7 @@
   $b_filtprep = $s_filtprep = false;
   //Error message for a failed checkout.
   $checkoutErr = "";
-  //Set when a successful database insert has occurred and stays until a consecutive one fails.
+  //Set when a successful database insert has occurred and stays (from GET) until a consecutive one fails.
   $succ = false;
 
   //FIRST, prioritize $_POST, which sends a checkout request, over $_GET, which sends filtering criteria.
@@ -48,7 +48,7 @@
     if(empty($_POST['bookid']) || empty($_POST['rocketid'])){
       $checkoutErr = "Incomplete selection.";
     }else{ //Second, clean and set id variables if both are not empty.
-      $bookid =     CleanInput($_POST['bookid']);
+      $bookid =   CleanInput($_POST['bookid']);
       $rocketid = CleanInput($_POST['rocketid']);
     }
     //Third, check that both id variables are not empty.
@@ -71,7 +71,9 @@
         $checkoutErr .= "Selected Book ID is not valid for checkout. ";
       }else{ //To catch potential wildcards someone may have POSTed for bookid.
         $book = $bookresult->fetch_assoc();
-        if($book['bookid']!=$bookid) $checkoutErr .= "Selected Book ID is not valid for checkout. ";
+        if($book['bookid']!=$bookid){
+          $checkoutErr .= "Selected Book ID is not valid for checkout. ";
+        }
       }
       //STUDENT STUDENT STUDENT
       $studentsql =  "SELECT`rocketid`FROM`student`";
@@ -85,7 +87,9 @@
         $checkoutErr .= "Selected Rocket ID is not valid for checkout.";
       }else{ //To catch potential wildcards someone may have POSTed for rocketid.
         $student = $studentresult->fetch_assoc();
-        if($student['rocketid']!=$rocketid) $checkoutErr .= "Selected Rocket ID is not valid for checkout.";
+        if($student['rocketid']!=$rocketid){
+          $checkoutErr .= "Selected Rocket ID is not valid for checkout.";
+        }
       }
       $conn->close();
     }
@@ -101,25 +105,39 @@
       $checkoutstmt->bind_param("ss",$bookid,$rocketid);
       $succ = $checkoutstmt->execute();
       $conn->close();
-      if(!$succ) $checkoutErr = "ERROR: Could not issue checkout.";
+      if(!$succ){
+        $checkoutErr = "ERROR: Could not issue checkout.";
+      }
     }
     //Sixth, if checkout could not be issued, reload page with cached $_POST values so they show up in $_GET.
     if(!$succ){
+      $newGET = array_merge([], $_POST);
       //Carry over errors and success status.
-      $newGET['checkoutErr'] = $checkoutErr;
-      $newGET['succ'] = $succ;
-      foreach($_POST as $POSTkey=>$POSTvalue)
-        $newGET[CleanInput($POSTkey)] = CleanInput($POSTvalue);
+      $newGET['checkoutErr'] = CleanInput($checkoutErr);
+      $newGET['succ'] = CleanInput($succ);
       $urlender = "checkout.php?";
       $urlender .= http_build_query($newGET);
       header("Location: $urlender");
 			exit();
     }
+    //Seventh, if checkout could be issued, reload page with just the success and a cleaned $_GET.
+    if($succ){
+      $cleanedGET['succ'] = CleanInput($succ);
+      $urlender = "checkout.php?";
+      $urlender .= http_build_query($cleanedGET);
+      header("Location: $urlender");
+      exit();
+    }
   }
+
   //SECOND, check $_GET for extra values sent over prior POSTs and set variables.
   if($_SERVER['REQUEST_METHOD']=="GET"){
-    if(!empty($_GET['checkoutErr'])) $checkoutErr = CleanInput($_GET['checkoutErr']);
-    if(!empty($_GET['succ'])) $succ = CleanInput($_GET['succ']);
+    if(isset($_GET['checkoutErr'])){
+      $checkoutErr = CleanInput($_GET['checkoutErr']);
+    }
+    if(isset($_GET['succ'])){
+      $succ = CleanInput($_GET['succ']);
+    }
   }
 
   //THIRD, fetch the latest checkout if last checkout was successful.
@@ -248,7 +266,7 @@
       //Fourth, check filtering for b_filtstr.
       if(!empty($b_filtcol) && isset($_GET['b_filtstr'])){
         $b_filtstr = CleanInput($_GET['b_filtstr']);
-        if(!empty($b_filtstr)){
+        if(!empty($b_filtstr) || $b_filtstr==0){
           //b_filtstr will need to be prepared.
           $b_filtstr = "%$b_filtstr%";
           $b_filter = "AND".$b_filtcol."LIKE ? ";
@@ -307,7 +325,7 @@
       //Fourth, check filtering for s_filtstr.
       if(!empty($s_filtcol) && isset($_GET['s_filtstr'])){
         $s_filtstr = CleanInput($_GET['s_filtstr']);
-        if(!empty($s_filtstr)){
+        if(!empty($s_filtstr) || $s_filtstr==0){
           //s_filtstr will need to be prepared.
           $s_filtstr = "%$s_filtstr%";
           $s_filter = "AND".$s_filtcol."LIKE ? ";
@@ -411,11 +429,28 @@
     $urlender .= http_build_query($tempGET);
     return $urlender;
   }
+  //Cleans out all GETS except for succ and checkoutErr if they exist.
+  function ClearAll($success,$error){
+    $keyvalues;
+    if(!empty($success) || $success==0){
+      $keyvalues['succ'] = CleanInput($success);
+    }
+    if(!empty($error)){
+      $keyvalues['checkoutErr'] = CleanInput($error);
+    }
+    $urlender = "checkout.php?";
+    if(!empty($keyvalues)){
+      $urlender .= http_build_query($keyvalues);
+    }
+    return($urlender);
+  }
   //Gets rid of the current book selection.
   function ClearSelected($key){
     $tempGET = array_merge([], $_GET);
     foreach($_GET as $GETkey=>$GETvalue){
-      if($GETkey==$key) unset($tempGET[$key]);
+      if($GETkey==$key){
+        unset($tempGET[$key]);
+      }
     }
     $urlender = "checkout.php?";
     $urlender .= http_build_query($tempGET);
@@ -425,7 +460,9 @@
   function ClearBookFiltering(){
     $tempGET = array_merge([], $_GET);
     foreach($_GET as $key=>$value){
-      if($key=="b_filtcol" || $key=="b_filtstr") unset($tempGET[$key]);
+      if($key=="b_filtcol" || $key=="b_filtstr"){
+        unset($tempGET[$key]);
+      }
     }
     $urlender = "checkout.php?";
     $urlender .= http_build_query($tempGET);
@@ -435,7 +472,9 @@
   function ClearStudentFiltering(){
     $tempGET = array_merge([], $_GET);
     foreach($_GET as $key=>$value){
-      if($key=="s_filtcol" || $key=="s_filtstr") unset($tempGET[$key]);
+      if($key=="s_filtcol" || $key=="s_filtstr"){
+        unset($tempGET[$key]);
+      }
     }
     $urlender = "checkout.php?";
     $urlender .= http_build_query($tempGET);
@@ -463,16 +502,17 @@
   }
   //Return the current filterstring.
   function GetFilterString($key){
-    if(isset($_GET[$key]))
+    if(isset($_GET[$key])){
       return(CleanInput($_GET[$key]));
-    else
-      return("");
+    }
+    return("");
   }
   //Return the current filtercolumn.
   function GetFilterColumn($key,$value){
     if(isset($_GET[$key])){
-      if($_GET[$key]==$value)
+      if($_GET[$key]==$value){
         return('selected="selected"');
+      }
     }
     return("");
   }
@@ -488,8 +528,11 @@
   function GetFormattedDate($string){
     if(!empty($string)){
       $date = strtotime($string);
-      if($date!==false) return(date('Y-M-d',$date));
-      else return(htmlspecialchars($string));
+      if($date!==false){
+        return(date('Y-m-d',$date));
+      }else{
+        return(htmlspecialchars($string));
+      }
     }
     return("No Date Found");
   }
@@ -518,7 +561,7 @@
     </h2>
     <?php if($succ): ?>
     <h3 style="margin-bottom: 0.25em">Successfully Checked Out Book:</h3>
-    <table>
+    <table style="margin-bottom: 0.25em">
       <tr>
         <th>Checkout ID</th>
         <th>Book ID</th>
@@ -542,23 +585,20 @@
         <td><?=htmlspecialchars($latest['name']);?></td>
         <td><?=htmlspecialchars($latest['phone']);?></td>
         <td><?=htmlspecialchars($latest['address']);?></td>
-        <td style="test-align: center"><?=GetFormattedDate($latest['checkout_date']);?></td>
-        <td class="text-align: center"><?=GetFormattedDate($latest['promise_date']);?></td>
+        <td style="text-align: center"><?=GetFormattedDate($latest['checkout_date']);?></td>
+        <td style="text-align: center"><?=GetFormattedDate($latest['promise_date']);?></td>
       </tr>
     </table>
     <?php endif; ?>
-    <span class="error">
+    <div class="error" style="font-family: sans-serif; font-size: 1.125em; margin-bottom: 0.5em">
       <?php if(!empty($checkoutErr)): ?>
       <?=$checkoutErr;?>
       <?php endif; ?>
-    </span>
+    </div>
     <form class="radio-field" method="POST" action="<?=htmlspecialchars($_SERVER['PHP_SELF']);?>">
       <?php foreach($_GET as $key=>$value): ?>
       <input type="hidden" name="<?=CleanInput($key);?>" value="<?=CleanInput($value);?>">
       <?php endforeach; ?>
-      <?php if($succ): ?>
-      <input type="hidden" name="succ" value="<?=CleanInput($succ);?>">
-      <?php endif; ?>
       <table>
         <tr>
           <td class="field-label">Selected Book:</td>
@@ -567,6 +607,11 @@
           <td>
             <a href="<?=ClearSelected("bookid");?>">
               <input class="clear-button" type="button" value="Clear">
+            </a>
+          </td>
+          <td>
+            <a style="padding-left: 0em" href="<?=ClearAll($succ,$checkoutErr);?>">
+              <input class="submit-button" type="button" value="Clear All">
             </a>
           </td>
         </tr>
@@ -579,11 +624,6 @@
               <input class="clear-button" type="button" value="Clear">
             </a>
           </td>
-          <td>
-            <a href="checkout.php">
-              <input class="clear-button" type="button" value="Clear All">
-            </a>
-          </td>
           <td><input class="submit-button" type="submit" value="Checkout"></td>
         </tr>
       </table>
@@ -591,7 +631,7 @@
     <div class="displaypair">
       <form class="radio-field" method="GET" action="<?=htmlspecialchars($_SERVER['PHP_SELF']);?>">
         <?php foreach($_GET as $key=>$value): ?>
-        <?php if(!($key=="b_filtcol"||$key=="b_filtstr")): ?>
+        <?php if(!($key=="b_filtcol" || $key=="b_filtstr")): ?>
         <input type="hidden" name="<?=CleanInput($key);?>" value="<?=CleanInput($value);?>">
         <?php endif; ?>
         <?php endforeach; ?>
@@ -616,14 +656,24 @@
       </form>  
       <table style="margin-top: 0.25em; width: 100%">
         <tr>
-          <th><a href="<?=ClearBookFiltering();?>">Clear Filtering</a></th>
           <th><a href="<?=RepopulateUrl("b_sortcol","bookid");?>">Book ID</a></th>
           <th><a href="<?=RepopulateUrl("b_sortcol","title");?>">Book Title</a></th>
           <th><a href="<?=RepopulateUrl("b_sortcol","author");?>">Book Author</a></th>
           <th><a href="<?=RepopulateUrl("b_sortcol","publisher");?>">Book Publisher</a></th>
+          <th class="sub-element">
+            <table class="sub-table">
+              <tr class="sub-row">
+                <td class="button-link"><a href="<?=ClearBookFiltering();?>">Clear Filtering</a></td>
+              </tr>
+            </table>
+          </th>
         </tr>
         <?php foreach($books as $book): ?>
         <tr>
+          <td><?=htmlspecialchars($book['bookid']);?></td>
+          <td><?=htmlspecialchars($book['title']);?></td>
+          <td><?=htmlspecialchars($book['author']);?></td>
+          <td><?=htmlspecialchars($book['publisher']);?></td>
           <td class="sub-element">
             <table class="sub-table">
               <tr class="sub-row">
@@ -633,18 +683,19 @@
               </tr>
             </table>
           </td>
-          <td><?=htmlspecialchars($book['bookid']);?></td>
-          <td><?=htmlspecialchars($book['title']);?></td>
-          <td><?=htmlspecialchars($book['author']);?></td>
-          <td><?=htmlspecialchars($book['publisher']);?></td>
         </tr>
         <?php endforeach; ?>
       </table>
+      <h2 style="text-align: center">
+        <span class="h2-span"><a href="../checkouts/listcheckouts.php">Back to Checkouts</a></span>
+        <span class="h2-span"><a href="../books/listbooks.php">Back to Books</a></span>
+        <span class="h2-span"><a href="../students/liststudents.php">Back to Students</a></span>
+      </h2>
     </div>
     <div class="displaypair">
       <form class="radio-field" method="GET" action="<?=htmlspecialchars($_SERVER['PHP_SELF']);?>">
         <?php foreach($_GET as $key=>$value): ?>
-        <?php if(!($key=="s_filtcol"||$key=="s_filtstr")): ?>
+        <?php if(!($key=="s_filtcol" || $key=="s_filtstr")): ?>
         <input type="hidden" name="<?=CleanInput($key);?>" value="<?=CleanInput($value);?>">
         <?php endif; ?>
         <?php endforeach; ?>
@@ -669,14 +720,24 @@
       </form>  
       <table style="margin-top: 0.25em; width: 100%">
         <tr>
-          <th><a href="<?=ClearStudentFiltering();?>">Clear Filtering</a></th>
           <th><a href="<?=RepopulateUrl("s_sortcol","rocketid");?>">Rocket ID</a></th>
           <th><a href="<?=RepopulateUrl("s_sortcol","name");?>">Student Name</a></th>
           <th><a href="<?=RepopulateUrl("s_sortcol","phone");?>">Student Phone</a></th>
           <th><a href="<?=RepopulateUrl("s_sortcol","address");?>">Student Address</a></th>
+          <th class="sub-element">
+            <table class="sub-table">
+              <tr class="sub-row">
+                <td class="button-link"><a href="<?=ClearStudentFiltering();?>">Clear Filtering</a></td>
+              </tr>
+            </table>
+          </th>
         </tr>
         <?php foreach($students as $student): ?>
         <tr>
+          <td><?=htmlspecialchars($student['rocketid']);?></td>
+          <td><?=htmlspecialchars($student['name']);?></td>
+          <td><?=htmlspecialchars($student['phone']);?></td>
+          <td><?=htmlspecialchars($student['address']);?></td>
           <td class="sub-element">
             <table class="sub-table">
               <tr class="sub-row">
@@ -686,18 +747,14 @@
               </tr>
             </table>
           </td>
-          <td><?=htmlspecialchars($student['rocketid']);?></td>
-          <td><?=htmlspecialchars($student['name']);?></td>
-          <td><?=htmlspecialchars($student['phone']);?></td>
-          <td><?=htmlspecialchars($student['address']);?></td>
         </tr>
         <?php endforeach; ?>
       </table>
+      <h2 style="text-align: center">
+        <span class="h2-span"><a href="../checkouts/listcheckouts.php">Back to Checkouts</a></span>
+        <span class="h2-span"><a href="../books/listbooks.php">Back to Books</a></span>
+        <span class="h2-span"><a href="../students/liststudents.php">Back to Students</a></span>
+      </h2>
     </div>
-    <h2>
-      <span class="h2-span"><a href="../checkouts/listcheckouts.php">Back to Checkouts</a></span>
-      <span class="h2-span"><a href="../books/listbooks.php">Back to Books</a></span>
-      <span class="h2-span"><a href="../students/liststudents.php">Back to Students</a></span>
-    </h2>
   </body>
 </html>
