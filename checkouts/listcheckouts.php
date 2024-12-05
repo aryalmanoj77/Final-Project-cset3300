@@ -131,7 +131,7 @@
         }
       }
       //Fifth, catch empty filtercol-filterstr pairs that slip past and populate with dummy values into $filters.
-      if(count($filters)<=$i+0){
+      if(count($filters)<=$i){
         $filterstr[$i] = "%";
         $filtercol[$i] = "`checkoutid`";
         $filters[] = $filtercol[$i]."LIKE ? ";
@@ -152,14 +152,16 @@
       }
     }
     //Seventh, populate filter variable if there's filtering.
-    if(!empty($filters)) $filter = "WHERE".implode(" AND ",$filters);
+    if(!empty($filters)){
+      $filter = "WHERE".implode(" AND ",$filters);
+    }
   }
 
   //Fetch main associative array.
   $inifile = parse_ini_file("../myproperties.ini");
   $conn = mysqli_connect($inifile["DBHOST"],$inifile["DBUSER"],$inifile["DBPASS"],$inifile["DBNAME"])
-          or die("Connection failed:" . mysqli_connect_error());
-  $sql = "SELECT";
+          or die("Connection failed:".mysqli_connect_error());
+  $sql =  "SELECT";
   $sql .= "`checkoutid`,";
   $sql .= "`bookid`,`title`,`author`,`publisher`,`book_active`,";
   $sql .= "`rocketid`,`name`,`phone`,`address`,`student_active`,";
@@ -186,11 +188,14 @@
   //Fill in NULLS.
   foreach($checkouts as &$checkout){
     //NULL return date with non-NULL promise date means checked out.
-    if(is_null($checkout['return_date']) && !is_null($checkout['promise_date']))
+    if(is_null($checkout['return_date']) && !is_null($checkout['promise_date'])){
       $checkout['return_date'] = 'CHECKED OUT';
+    }
     //Everything else that's NULL is not applicable.
     foreach($checkout as &$key){
-      if(is_null($key)) $key = 'N/A';
+      if(is_null($key)){
+        $key = 'N/A';
+      }
     }
     unset($key);
   }
@@ -260,10 +265,11 @@
   function GetLatestReturn($currentbookid,$latest){
     foreach($latest as $latestbook){
       if($currentbookid==$latestbook['bookid']){
-        if(is_null($latestbook['return_date']))
+        if(is_null($latestbook['return_date'])){
           return("CHECKED OUT");
-        else
+        }else{
           return($latestbook['return_date']);
+        }
       }
     }
     return "";
@@ -273,44 +279,47 @@
     if(!isset($_GET['checkout']) && $compare=="both"){
       return("checked");
     }else if(isset($_GET['checkout'])){
-      if($_GET['checkout']==$compare)
+      if($_GET['checkout']==$compare){
         return("checked");
-      else if($compare=="both")
+      }else if($compare=="both"){
         return("checked");
+      }
     }
     return("");
   }
   //Return the current filterstring.
   function GetFilterString($index){
-    if(isset($_GET['filterstr'.$index]))
+    if(isset($_GET['filterstr'.$index])){
       return(htmlspecialchars($_GET['filterstr'.$index]));
-    else
-      return("");
+    }
+    return("");
   }
   //Return the current filtercolumn.
   function GetFilterColumn($value,$index){
     if(isset($_GET['filtercol'.$index])){
-      if($_GET['filtercol'.$index]==$value)
+      if($_GET['filtercol'.$index]==$value){
         return('selected="selected"');
+      }
     }
     return("");
   }
   //Returns strings as date formats all in the same format.
   function GetFormattedDate($string){
-    if(isset($string)){
-      if(!empty($string)){
-        $date = strtotime($string);
-        if($date!==false) return date('Y-M-d',$date);
-        else return htmlspecialchars($string);
+    if(!empty($string)){
+      $date = strtotime($string);
+      if($date!==false){
+        return date('Y-m-d',$date);
+      }else{
+        return htmlspecialchars($string);
       }
     }
     return "No Date Found";
   }
   //Because the history anchor header reference is absurdly long.
   function BuildHistoryHRef($checkout){
-    $urlender =  'listcheckouts.php?filtercol0=bookid&filtercol1=rocketid';
-    $urlender .= '&filterstr0='.htmlspecialchars($checkout['bookid']);
-    $urlender .= '&filterstr1='.htmlspecialchars($checkout['rocketid']);
+    $urlender =  'listcheckouts.php?filtercol0=title&filtercol1=name';
+    $urlender .= '&filterstr0='.htmlspecialchars($checkout['title']);
+    $urlender .= '&filterstr1='.htmlspecialchars($checkout['name']);
     return $urlender;
   }
   //Distrust all user input.
@@ -325,7 +334,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-  <?php require('../inc-stdmeta.php'); ?>
+    <?php require('../inc-stdmeta.php'); ?>
     <title>Checkouts</title>
   </head>
   <body>
@@ -333,11 +342,11 @@
     <h3>CSET Department Student Library</h3>
     <h2><a href="../index.php">Back to Home</a></h2>
     <form class="radio-field" method="GET" action="<?=htmlspecialchars($_SERVER['PHP_SELF']);?>">
-    <?php foreach($_GET as $key=>$value): ?>
-    <?php if(!($key=="checkout"||preg_match("/filter/",$key))): ?>
+      <?php foreach($_GET as $key=>$value): ?>
+      <?php if(!($key=="checkout"||preg_match("/filter/",$key))): ?>
       <input type="hidden" name="<?=CleanInput($key);?>" value="<?=CleanInput($value);?>">
-    <?php endif; ?>
-    <?php endforeach; ?>
+      <?php endif; ?>
+      <?php endforeach; ?>
       <table>
         <tr>
           <td class="radio-label">Checkout Status:</td>
@@ -402,7 +411,7 @@
         <th><a href="<?=RepopulateUrl("sortcol","promise_date");?>">Return By Date</a></th>
         <th><a href="<?=RepopulateUrl("sortcol","return_date");?>">Date Returned</a></th>
       </tr>
-    <?php foreach($checkouts as $checkout): ?>
+      <?php foreach($checkouts as $checkout): ?>
       <tr>
         <td style="text-align: center"><?=htmlspecialchars($checkout['checkoutid']);?></td>
         <td style="text-align: center"><?=htmlspecialchars($checkout['bookid']);?></td>
