@@ -107,56 +107,42 @@
   <body>
     <h1>Edit Book</h1>
     <h3>CSET Department Student Library</h3>
-    
+    <h2><a href="../books/listbooks.php">Back to Books</a></h2>
     <?php if (!$book && $bookid): ?>
-      <p class="error">Book not found.</p>
-      <h3><a href="listbooks.php">Back to Books</a></h3>
+    <h3 class="error">Book not found.</h3>
     <?php else: ?>
-    
-      <?php if ($success): ?>
-        <p class="success">Book successfully updated.</p>
-      <?php endif; ?>
-      
-      <form method="POST" action="<?= htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
-        <input type="hidden" name="bookid" value="<?= htmlspecialchars($bookid); ?>">
-        <table>
-          <tr>
-            <td><label for="title">Title:</label></td>
-            <td>
-              <input type="text" id="title" name="title" value="<?= htmlspecialchars($title); ?>" maxlength="50">
-              <span class="error"><?= $titleErr; ?></span>
-            </td>
-          </tr>
-          <tr>
-            <td><label for="author">Author:</label></td>
-            <td>
-              <input type="text" id="author" name="author" value="<?= htmlspecialchars($author); ?>" maxlength="50">
-              <span class="error"><?= $authorErr; ?></span>
-            </td>
-          </tr>
-          <tr>
-            <td><label for="publisher">Publisher:</label></td>
-            <td>
-              <input type="text" id="publisher" name="publisher" value="<?= htmlspecialchars($publisher); ?>" maxlength="50">
-              <span class="error"><?= $publisherErr; ?></span>
-            </td>
-          </tr>
-          <tr>
-            <td><label for="active">In Circulation:</label></td>
-            <td>
-              <input type="checkbox" id="active" name="active" <?= $active ? "checked" : ""; ?>>
-            </td>
-          </tr>
-          <tr>
-            <td colspan="2">
-              <input type="submit" value="Update Book">
-            </td>
-          </tr>
-        </table>
-      </form>
-      
+    <?php if ($success): ?>
+    <h3 class="success">Book successfully updated.</h3>
     <?php endif; ?>
-    
-    <h3><a href="listbooks.php">Back to Books</a></h3>
+    <form class="field-field" method="POST" action="<?= htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+      <input type="hidden" name="bookid" value="<?= htmlspecialchars($bookid); ?>">
+      <table>
+        <tr>
+          <td class="field-label">Title:</td>
+          <td><input class="textbox" type="text" name="title" value="<?= htmlspecialchars($title); ?>" maxlength="50"></td>
+          <td><span class="error"><?= $titleErr; ?></span></td>
+        </tr>
+        <tr>
+          <td class="field-label">Author:</td>
+          <td><input class="textbox" type="text" name="author" value="<?= htmlspecialchars($author); ?>" maxlength="50"></td>
+          <td><span class="error"><?= $authorErr; ?></span></td>
+        </tr>
+        <tr>
+          <td class="field-label">Publisher:</td>
+          <td><input class="textbox" type="text" name="publisher" value="<?= htmlspecialchars($publisher); ?>" maxlength="50"></td>
+          <td> <span class="error"><?= $publisherErr; ?></span></td>
+        </tr>
+        <tr>
+          <td class="field-label"><label for="active">In Circulation:</label></td>
+          <td><input type="checkbox" id="active" name="active" <?= $active ? "checked" : ""; ?>></td>
+        </tr>
+        <tr>
+          <td class="field-label">Edit Book:</td>
+          <td><button class="change-button" type="submit" name="edit">Edit</button></td>
+        </tr>
+      </table>
+    </form>
+    <?php endif; ?>
+    <h2><a href="../books/listbooks.php">Back to Books</a></h2>
   </body>
 </html>
