@@ -5,12 +5,13 @@ if (!isset($_SESSION['valid_user'])) {
     exit;
 }
 
-// Database connection
+// DATABASE CONNECTION
+require('../inc-stdmeta.php');
 $inifile = parse_ini_file("../myproperties.ini");
 $conn = new mysqli($inifile["DBHOST"], $inifile["DBUSER"], $inifile["DBPASS"], $inifile["DBNAME"]);
 if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
 
-// Handle form submission
+// FORM SUBMISSION
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name']);
@@ -45,12 +46,12 @@ $conn->close();
     <h1>Add Student</h1>
     <h3><a href="liststudents.php">Back to Students</a></h3>
 
-    <!-- Success/Error Message -->
+    <!-- SUCCESS/ERROR MESSAGE -->
     <?php if ($message): ?>
         <p><?php echo htmlspecialchars($message); ?></p>
     <?php endif; ?>
 
-    <!-- Add Student -->
+    <!-- ADD STUDENT -->
     <form method="post">
         <p>
             <label for="name">Name:</label>
