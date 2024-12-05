@@ -18,13 +18,19 @@
   //Check username and password inputs and authenticate user if they pass.
   if($_SERVER['REQUEST_METHOD']=="POST"){
     //First, set errors for any empty fields.
-    if    (!isset($_POST['username'])) $usernameErr = "Please enter username.";
-    else if(empty($_POST['username'])) $usernameErr = "Please enter username.";
-    if    (!isset($_POST['password'])) $passwordErr = "Please enter password.";
-    else if(empty($_POST['password'])) $passwordErr = "Please enter password.";
+    if(empty($_POST['username'])){
+      $usernameErr = "Please enter username.";
+    }
+    if(empty($_POST['password'])){
+      $passwordErr = "Please enter password.";
+    }
     //Second, populate $username and $password if $usernameErr and $passwordErr are not empty, respectively.
-    if(empty($usernameErr)) $username = CleanInput($_POST['username']);
-    if(empty($passwordErr)) $password = CleanInput($_POST['password']);
+    if(empty($usernameErr)){
+      $username = CleanInput($_POST['username']);
+    }
+    if(empty($passwordErr)){
+      $password = CleanInput($_POST['password']);
+    }
     //Third, if $usernameErr is still empty, then check that we get a database hit.
     if(empty($usernameErr)){
       $inifile = parse_ini_file("../myproperties.ini");
@@ -40,8 +46,11 @@
         $user = $result->fetch_assoc();
         //Fourth, if $passwordErr is still empty, then compare passwords.
         if(empty($passwordErr)){
-          if(password_verify($password,$user['passwordhash'])) $succ=true;
-          else $usernameErr = $passwordErr = "Invalid username or password.";
+          if(password_verify($password,$user['passwordhash'])){
+            $succ=true;
+          }else{
+            $usernameErr = $passwordErr = "Invalid username or password.";
+          }
         }
       }
       $conn->close();
@@ -67,7 +76,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-  <?php require('..\inc-stdmeta.php'); ?>
+    <?php require('..\inc-stdmeta.php'); ?>
     <title>Login Page</title>
   </head>
   <body>

@@ -12,17 +12,17 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-  <?php require('../inc-stdmeta.php'); ?>
+    <?php require('../inc-stdmeta.php'); ?>
     <title>Log Out</title>
   </head>
   <body>
     <h1>Log Out</h1>
     <h3>CSET Department Student Library</h3>
-  <?php if(!empty($old_user)): ?>
+    <?php if(!empty($old_user)): ?>
     <h3>User <?=htmlspecialchars($old_user);?> has been logged out.</h3>
-  <?php else: ?>
+    <?php else: ?>
     <h3>No user logged in to log out.</h3>
-  <?php endif; ?>
+    <?php endif; ?>
     <h2><a href="../home/login.php">Back to Login Page</a></h2>
   </body>
 </html>
